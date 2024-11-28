@@ -1,5 +1,13 @@
 package typed
 
+type ConfigInfo struct {
+	CoreName     string            `json:"core_name"`
+	ProtocolAddr map[string]string `json:"protocol_addr"`
+	WebUIPort    uint16            `json:"webui_port"`
+	PasswordHash string            `json:"password_hash"`
+	ServiceName  string            `json:"service_name"`
+}
+
 type MessageEventInfo struct {
 	Time        int64         `json:"time,omitempty"`
 	SelfId      int64         `json:"self_id,omitempty"`
@@ -101,7 +109,7 @@ type MessageDataInfo struct {
 	Data    string `json:"data,omitempty"`
 }
 
-type APIRequest struct {
+type APIRequestInfo struct {
 	Action string     `json:"action,omitempty"`
 	Params ParamsInfo `json:"params"`
 	Echo   string     `json:"echo,omitempty"`

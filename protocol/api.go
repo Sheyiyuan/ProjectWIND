@@ -12,7 +12,7 @@ func init() {
 
 func SendMessage(messageType string, message string, targetId int64, autoEscape bool) (bool, error) {
 	// 构建发送消息的JSON数据
-	var messageData typed.APIRequest
+	var messageData typed.APIRequestInfo
 	messageData.Action = "send_msg"
 	switch messageType {
 	case "private":

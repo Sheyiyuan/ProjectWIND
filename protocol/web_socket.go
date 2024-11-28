@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	severURL = "ws://110.41.4.138:3001"
+	severURL = "your_url"
 )
 
 func WebSocketHandler() (*websocket.Conn, error) {
@@ -31,6 +31,8 @@ func WebSocketHandler() (*websocket.Conn, error) {
 			log.Println("[ERROR] Close error:", err)
 		}
 	}(conn)
+
+	log.Println("[INFO] New connection established.")
 
 	for {
 		messageType, message, err := conn.ReadMessage()
