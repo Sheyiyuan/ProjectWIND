@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	severURL = "your_url"
+	severURL = "your_server_url"
 )
 
 func WebSocketHandler() (*websocket.Conn, error) {
