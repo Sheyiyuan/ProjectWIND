@@ -9,14 +9,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	severURL = "your_server_url"
-)
+var gProtocolAddr string
 
-func WebSocketHandler() (*websocket.Conn, error) {
-	u, err := url.Parse(severURL)
+// WebSocketHandler 接收WebSocket连接处的消息并处理
+func WebSocketHandler(protocolAddr string) (*websocket.Conn, error) {
+	// 保存全局变量
+	gProtocolAddr = protocolAddr
+	// 解析连接URL
+	u, err := url.Parse(protocolAddr)
 	if err != nil {
-		log.Println("Parse URL error:", err)
+		log.Println("[ERROR] Parse URL error:", err)
 		return nil, err
 	}
 
@@ -47,6 +49,7 @@ func WebSocketHandler() (*websocket.Conn, error) {
 	return conn, nil
 }
 
+// processMessage 处理接收到的消息
 func processMessage(messageType int, message []byte) {
 	if messageType != websocket.TextMessage {
 		log.Println("[INFO] Invalid message type:", messageType)
@@ -95,17 +98,17 @@ func processMessage(messageType int, message []byte) {
 }
 
 // wsSendMessage 向WebSocket服务器发送消息并返回发送状态
-func wsSendMessage(message []byte) (bool, error) {
+func wsSendMessage(message []byte) error {
 	// 解析连接URL
-	u, err := url.Parse(fmt.Sprintf("%v/api", severURL))
+	u, err := url.Parse(fmt.Sprintf("%v/api", gProtocolAddr))
 	if err != nil {
-		return false, fmt.Errorf("无效的URL: %v", err)
+		return fmt.Errorf("无效的URL: %v", err)
 	}
 
 	// 建立连接
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return false, fmt.Errorf("连接失败: %v", err)
+		return fmt.Errorf("连接失败: %v", err)
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
@@ -117,8 +120,8 @@ func wsSendMessage(message []byte) (bool, error) {
 	// 发送消息
 	err = conn.WriteMessage(websocket.TextMessage, message)
 	if err != nil {
-		return false, fmt.Errorf("发送消息失败: %v", err)
+		return fmt.Errorf("发送消息失败: %v", err)
 	}
 
-	return true, nil
+	return nil
 }

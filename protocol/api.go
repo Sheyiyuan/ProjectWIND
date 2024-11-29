@@ -31,7 +31,7 @@ func SendMessage(messageType string, message string, targetId int64, autoEscape 
 		return false, err
 	}
 	// 发送消息
-	_, err = wsSendMessage(messageJson)
+	err = wsSendMessage(messageJson)
 	if err != nil {
 		return false, err
 	}

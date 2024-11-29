@@ -1,11 +1,11 @@
 package typed
 
 type ConfigInfo struct {
-	CoreName     string            `json:"core_name"`
-	ProtocolAddr map[string]string `json:"protocol_addr"`
-	WebUIPort    uint16            `json:"webui_port"`
-	PasswordHash string            `json:"password_hash"`
-	ServiceName  string            `json:"service_name"`
+	CoreName     string `json:"core_name"`
+	ProtocolAddr string `json:"protocol_addr"`
+	WebUIPort    uint16 `json:"webui_port"`
+	PasswordHash string `json:"password_hash"`
+	ServiceName  string `json:"service_name"`
 }
 
 type MessageEventInfo struct {
