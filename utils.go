@@ -152,41 +152,21 @@ func checkAndUpdateConfig(configPath string) error {
 		return err
 	}
 
-	// 检查./data/文件夹中是否存在app/文件夹
-	if _, err := os.Stat("./data/app/"); os.IsNotExist(err) {
-		// 如果不存在，则创建该文件夹
-		err := os.Mkdir("./data/app/", 0755)
-		if err != nil {
-			return err
+	checkDataFolderExistence := func(dataAddress string) error {
+		// 检查./data/文件夹中是否存在dataAddress文件夹
+		if _, err := os.Stat(dataAddress); os.IsNotExist(err) {
+			err := os.Mkdir(dataAddress, 0755)
+			if err != nil {
+				return err
+			}
 		}
+		return nil
 	}
-
-	// 检查./data/文件夹中是否存在images/文件夹
-	if _, err := os.Stat("./data/images/"); os.IsNotExist(err) {
-		// 如果不存在，则创建该文件夹
-		err := os.Mkdir("./data/images/", 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	// 检查./data/文件夹中是否存在database/文件夹
-	if _, err := os.Stat("./data/database/"); os.IsNotExist(err) {
-		// 如果不存在，则创建该文件夹
-		err := os.Mkdir("./data/database/", 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	// 检查./data/文件夹中是否存在log/文件夹
-	if _, err := os.Stat("./data/log/"); os.IsNotExist(err) {
-		// 如果不存在，则创建该文件夹
-		err := os.Mkdir("./data/log/", 0755)
-		if err != nil {
-			return err
-		}
-	}
+	
+	checkDataFolderExistence("./data/app/")
+	checkDataFolderExistence("./data/images/")
+	checkDataFolderExistence("./data/database/")
+	checkDataFolderExistence("./data/log/")
 
 	return nil
 }
