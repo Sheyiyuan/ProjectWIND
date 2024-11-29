@@ -162,11 +162,27 @@ func checkAndUpdateConfig(configPath string) error {
 		}
 		return nil
 	}
-	
-	checkDataFolderExistence("./data/app/")
-	checkDataFolderExistence("./data/images/")
-	checkDataFolderExistence("./data/database/")
-	checkDataFolderExistence("./data/log/")
+
+	err = checkDataFolderExistence("./data/app/")
+	if err != nil {
+		log.Printf("[ERROR] Failed to create app folder: %v", err)
+		return err
+	}
+	err = checkDataFolderExistence("./data/images/")
+	if err != nil {
+		log.Printf("[ERROR] Failed to create images folder: %v", err)
+		return err
+	}
+	err = checkDataFolderExistence("./data/database/")
+	if err != nil {
+		log.Printf("[ERROR] Failed to create database folder: %v", err)
+		return err
+	}
+	err = checkDataFolderExistence("./data/log/")
+	if err != nil {
+		log.Printf("[ERROR] Failed to create database log file: %v", err)
+		return err
+	}
 
 	return nil
 }
