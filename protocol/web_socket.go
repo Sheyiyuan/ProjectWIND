@@ -12,20 +12,20 @@ import (
 var gProtocolAddr string
 
 // WebSocketHandler 接收WebSocket连接处的消息并处理
-func WebSocketHandler(protocolAddr string) (*websocket.Conn, error) {
+func WebSocketHandler(protocolAddr string) error {
 	// 保存全局变量
 	gProtocolAddr = protocolAddr
 	// 解析连接URL
 	u, err := url.Parse(protocolAddr)
 	if err != nil {
 		log.Println("[ERROR] Parse URL error:", err)
-		return nil, err
+		return err
 	}
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Println("[ERROR] Dial error:", err)
-		return nil, err
+		return err
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
@@ -36,17 +36,30 @@ func WebSocketHandler(protocolAddr string) (*websocket.Conn, error) {
 
 	log.Println("[INFO] New connection established.")
 
+	// 定义通道,缓存消息和消息类型，防止消息处理阻塞
+	messageChan := make(chan []byte, 32)
+	messageTypeChan := make(chan int, 32)
+
 	for {
+		// 接收消息并放入通道
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("[ERROR] Read error:", err)
-			break
+			return err
 		}
+		messageChan <- message
+		messageTypeChan <- messageType
 
-		// 将接收到的消息交给另一个函数处理
-		processMessage(messageType, message)
+		// 启动一个新的goroutine来处理消息
+		go func() {
+			defer func() {
+				// 处理完成后从通道中移除消息
+				<-messageChan
+				<-messageTypeChan
+			}()
+			processMessage(messageType, message)
+		}()
 	}
-	return conn, nil
 }
 
 // processMessage 处理接收到的消息

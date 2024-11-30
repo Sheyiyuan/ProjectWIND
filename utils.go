@@ -280,7 +280,7 @@ func startProtocol() {
 	//链接协议
 	// 启动 WebSocket 处理程序
 	log.Println("[INFO] 正在启动WebSocket链接程序...")
-	_, err = protocol.WebSocketHandler(protocolAddr)
+	err = protocol.WebSocketHandler(protocolAddr)
 	if err != nil {
 		// 如果发生错误，记录错误并退出程序
 		log.Fatal(err)
