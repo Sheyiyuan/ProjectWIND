@@ -1,9 +1,12 @@
 package protocol
 
 import (
+	"ProjectWIND/LOG"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
+	"net/http"
 	"net/url"
 
 	"github.com/gorilla/websocket"
@@ -18,23 +21,23 @@ func WebSocketHandler(protocolAddr string) error {
 	// 解析连接URL
 	u, err := url.Parse(protocolAddr)
 	if err != nil {
-		log.Println("[ERROR] Parse URL error:", err)
+		LOG.ERROR("Parse URL error: %v", err)
 		return err
 	}
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Println("[ERROR] Dial error:", err)
+		LOG.ERROR("Dial error: %v", err)
 		return err
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
 		if err != nil {
-			log.Println("[ERROR] Close error:", err)
+			LOG.ERROR("Close error: %v", err)
 		}
 	}(conn)
 
-	log.Println("[INFO] New connection established.")
+	LOG.INFO("WebSocket connection to %v established.", u.String())
 
 	// 定义通道,缓存消息和消息类型，防止消息处理阻塞
 	messageChan := make(chan []byte, 32)
@@ -44,7 +47,7 @@ func WebSocketHandler(protocolAddr string) error {
 		// 接收消息并放入通道
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("[ERROR] Read error:", err)
+			LOG.ERROR("ReadMessage error: %v", err)
 			return err
 		}
 		messageChan <- message
@@ -65,14 +68,14 @@ func WebSocketHandler(protocolAddr string) error {
 // processMessage 处理接收到的消息
 func processMessage(messageType int, message []byte) {
 	if messageType != websocket.TextMessage {
-		log.Println("[INFO] Invalid message type:", messageType)
+		LOG.ERROR("Invalid message type: %v", messageType)
 		return
 	}
 	//message json解析
 	var messageMap map[string]interface{}
 	err := json.Unmarshal(message, &messageMap)
 	if err != nil {
-		log.Println("[ERROR] Unmarshal error:", err)
+		LOG.ERROR("Unmarshal error: %v", err)
 		return
 	}
 	// 处理接收到的消息
@@ -105,13 +108,13 @@ func processMessage(messageType int, message []byte) {
 	default:
 		{
 			// 打印接收到的消息
-			log.Printf("[WARN] Received message: %s", message)
+			LOG.WARN("Received unknown event: %s", message)
 		}
 	}
 }
 
 // wsSendMessage 向WebSocket服务器发送消息并返回发送状态
-func wsSendMessage(message []byte) error {
+func wsAPI(body []byte) error {
 	// 解析连接URL
 	u, err := url.Parse(fmt.Sprintf("%v/api", gProtocolAddr))
 	if err != nil {
@@ -126,15 +129,39 @@ func wsSendMessage(message []byte) error {
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
 		if err != nil {
-			log.Println("[ERROR] Close error:", err)
+			LOG.ERROR("Close error: %v", err)
 		}
 	}(conn)
 
-	// 发送消息
-	err = conn.WriteMessage(websocket.TextMessage, message)
+	// 发送请求
+	err = conn.WriteMessage(websocket.TextMessage, body)
 	if err != nil {
-		return fmt.Errorf("发送消息失败: %v", err)
+		return fmt.Errorf("请求发送失败: %v", err)
 	}
 
 	return nil
+}
+
+func httpAPI(method, action string, body []byte) (int, []byte, error) {
+	urlStr := fmt.Sprintf("%v/api/%v", gProtocolAddr, action)
+	resp, err := http.Post(urlStr, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return 0, nil, fmt.Errorf("请求失败: %v", err)
+	}
+	defer func(resp *http.Response) {
+		err := resp.Body.Close()
+		if err != nil {
+			LOG.ERROR("Close error: %v", err)
+		}
+	}(resp)
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, nil, fmt.Errorf("请求失败: %v", resp.Status)
+	}
+
+	body, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, nil, fmt.Errorf("读取响应失败: %v", err)
+	}
+	return resp.StatusCode, body, nil
 }

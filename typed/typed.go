@@ -137,4 +137,5 @@ type ParamsInfo struct {
 	Reason           string `json:"reason,omitempty"`
 	NoCache          bool   `json:"no_cache,omitempty"`
 	File             string `json:"file,omitempty"`
+	Times            int    `json:"times,omitempty"`
 }

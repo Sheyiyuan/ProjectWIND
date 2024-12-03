@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ProjectWIND/LOG"
 	"ProjectWIND/protocol"
 	"ProjectWIND/typed"
 	"encoding/json"
@@ -17,11 +18,11 @@ func initCore() string {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	log.SetPrefix("[WIND] ")
 
-	log.Println("[INFO] 正在初始化WIND配置文件...")
+	LOG.INFO("正在初始化WIND配置文件...")
 
 	err := checkAndUpdateConfig("./data/config.json")
 	if err != nil {
-		log.Fatal(err)
+		LOG.FATAL("Failed to initialize config file: %v", err)
 	}
 	// 创建日志文件
 	logFile := fmt.Sprintf("./data/log/WIND_CORE_%s.log", time.Now().Format("20060102150405"))
@@ -29,30 +30,30 @@ func initCore() string {
 	if os.IsNotExist(err) {
 		file, err := os.Create(logFile)
 		if err != nil {
-			log.Fatalf("[ERROR] Failed to create log file: %v", err)
+			LOG.FATAL("Failed to create log file: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				log.Printf("[ERROR] Failed to close log file: %v", err)
+				LOG.FATAL("Failed to close log file: %v", err)
 			}
 		}(file)
 	}
 
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatalf("[ERROR] Failed to create log file: %v", err)
+		LOG.FATAL("Failed to open log file: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Printf("[ERROR] Failed to close log file: %v", err)
+			LOG.FATAL("Failed to close log file: %v", err)
 		}
 	}(file)
 
 	// 设置日志输出到文件
 	log.SetOutput(io.MultiWriter(os.Stdout, file))
-	log.Println("[INFO] WIND配置文件初始化完成！")
+	LOG.INFO("WIND配置文件初始化完成！")
 	return logFile
 }
 
@@ -62,7 +63,7 @@ func checkAndUpdateConfig(configPath string) error {
 		// 如果不存在，则创建该文件夹
 		err := os.Mkdir("./data/", 0755)
 		if err != nil {
-			log.Fatal(err)
+			LOG.FATAL("Failed to create data folder: %v", err)
 		}
 	}
 
@@ -71,12 +72,12 @@ func checkAndUpdateConfig(configPath string) error {
 		// 如果不存在，则创建该文件
 		file, err := os.Create("./data/config.json")
 		if err != nil {
-			log.Fatal(err)
+			LOG.FATAL("Failed to create config file: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				log.Fatal(err)
+				LOG.FATAL("Failed to close config file: %v", err)
 			}
 		}(file)
 	}
@@ -98,7 +99,7 @@ func checkAndUpdateConfig(configPath string) error {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Printf("[ERROR] Failed to close config file: %v", err)
+			LOG.FATAL("Failed to close config file: %v", err)
 		}
 	}(file)
 
@@ -136,19 +137,19 @@ func checkAndUpdateConfig(configPath string) error {
 	// 将格式化后的JSON字符串写入文件
 	file, err = os.Create("./data/config.json")
 	if err != nil {
-		log.Println("Error creating file:", err)
+		LOG.FATAL("Error creating config file:%v", err)
 		return err
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Printf("Failed to close config file: %v", err)
+			LOG.FATAL("Failed to close config file: %v", err)
 		}
 	}(file)
 
 	_, err = file.Write(formattedJSON)
 	if err != nil {
-		log.Println("[ERROR] Error writing to file:", err)
+		LOG.FATAL("Error writing to config file: %v", err)
 		return err
 	}
 
@@ -165,22 +166,22 @@ func checkAndUpdateConfig(configPath string) error {
 
 	err = checkDataFolderExistence("./data/app/")
 	if err != nil {
-		log.Printf("[ERROR] Failed to create app folder: %v", err)
+		LOG.FATAL("Failed to create app folder: %v", err)
 		return err
 	}
 	err = checkDataFolderExistence("./data/images/")
 	if err != nil {
-		log.Printf("[ERROR] Failed to create images folder: %v", err)
+		LOG.FATAL("Failed to create images folder: %v", err)
 		return err
 	}
 	err = checkDataFolderExistence("./data/database/")
 	if err != nil {
-		log.Printf("[ERROR] Failed to create database folder: %v", err)
+		LOG.FATAL("Failed to create database folder: %v", err)
 		return err
 	}
 	err = checkDataFolderExistence("./data/log/")
 	if err != nil {
-		log.Printf("[ERROR] Failed to create database log file: %v", err)
+		LOG.FATAL("Failed to create log folder: %v", err)
 		return err
 	}
 
@@ -197,18 +198,18 @@ func startWebUI() {
 		// 打开日志文件
 		file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
-			log.Fatalf("[ERROR] Failed to create log file: %v", err)
+			LOG.FATAL("Failed to open log file: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				log.Printf("[ERROR] Failed to close log file: %v", err)
+				LOG.FATAL("Failed to close log file: %v", err)
 			}
 		}(file)
 		// 设置日志输出到文件
 		log.SetOutput(io.MultiWriter(os.Stdout, file))
 
-		log.Println("[INFO] 正在启动WIND核心服务...")
+		LOG.INFO("正在启动WIND核心服务...")
 		// 启动 WebSocket 处理程序
 
 		//TODO: 这里要添加webUI的启动代码
@@ -224,12 +225,12 @@ func registerService() {
 	// 打开日志文件
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatalf("[ERROR] Failed to create log file: %v", err)
+		LOG.FATAL("Failed to create log file: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Printf("[ERROR] Failed to close log file: %v", err)
+			LOG.FATAL("Failed to close log file: %v", err)
 		}
 	}(file)
 	// 设置日志输出到文件
@@ -246,44 +247,44 @@ func startProtocol() {
 	// 打开日志文件
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatalf("[ERROR] Failed to create log file: %v", err)
+		LOG.FATAL("Failed to create log file: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Printf("[ERROR] Failed to close log file: %v", err)
+			LOG.FATAL("Failed to close log file: %v", err)
 		}
 	}(file)
 	// 设置日志输出到文件
 	log.SetOutput(io.MultiWriter(os.Stdout, file))
 	//从配置文件中读取配置信息
-	log.Println("[INFO] 正在启动WIND协议服务...")
+	LOG.INFO("正在启动WIND协议服务...")
 	var config typed.ConfigInfo
 	file, err = os.Open("./data/config.json")
 	if err != nil {
-		log.Printf("[ERROR] Failed to open config file when linking to protocol: %v", err)
+		LOG.FATAL("Failed to open config file: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Printf("[ERROR] Failed to close config file: %v", err)
+			LOG.FATAL("Failed to close config file: %v", err)
 		}
 	}(file)
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
 	if err != nil {
-		log.Printf("[ERROR] Failed to decode config file when linking to protocol: %v", err)
+		LOG.FATAL("Failed to decode config file when linking to protocol: %v", err)
 	}
 	//获取协议地址
 	protocolAddr := config.ProtocolAddr
 	//链接协议
 	// 启动 WebSocket 处理程序
-	log.Println("[INFO] 正在启动WebSocket链接程序...")
+	LOG.INFO("正在启动WebSocket链接程序...")
 	err = protocol.WebSocketHandler(protocolAddr)
 	if err != nil {
 		// 如果发生错误，记录错误并退出程序
-		log.Fatal(err)
+		LOG.FATAL("Failed to start WebSocket link program: %v", err)
 	}
 	return
 }
