@@ -8,7 +8,8 @@ import (
 func main() {
 	//如果没有参数，则启动WebUI
 	if len(os.Args) <= 1 {
-		startWebUI()
+		initCore()
+		fmt.Println("请修改配置文件后，使用-p参数连接协议端开始运行。")
 		return
 	}
 	cmdArgs := os.Args[1:]
