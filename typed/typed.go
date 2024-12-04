@@ -1,6 +1,6 @@
 package typed
 
-type ConfigInfo struct {
+type CoreConfigInfo struct {
 	CoreName     string `json:"core_name"`
 	ProtocolAddr string `json:"protocol_addr"`
 	WebUIPort    uint16 `json:"webui_port"`
@@ -138,4 +138,28 @@ type ParamsInfo struct {
 	NoCache          bool   `json:"no_cache,omitempty"`
 	File             string `json:"file,omitempty"`
 	Times            int    `json:"times,omitempty"`
+}
+
+type ExtInfo struct {
+	Inform  func() extInformation
+	Run     func(cmd string, args []string, msg MessageEventInfo) error
+	Init    func() error
+	CmdList func() []string
+}
+
+func (e *ExtInfo) SetInform(name string, version string, author string) {
+	inform := extInformation{
+		Name:    name,
+		Version: version,
+		Author:  author,
+	}
+	e.Inform = func() extInformation {
+		return inform
+	}
+}
+
+type extInformation struct {
+	Name    string
+	Version string
+	Author  string
 }
