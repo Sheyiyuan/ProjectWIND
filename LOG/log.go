@@ -12,12 +12,12 @@ func DEBUG(text string, msg ...interface{}) {
 
 func INFO(text string, msg ...interface{}) {
 	msgText := fmt.Sprintf(text, msg...)
-	log.Println("[INFO] ", msgText)
+	log.Println("[INFO]  ", msgText)
 }
 
 func WARN(text string, msg ...interface{}) {
 	msgText := fmt.Sprintf(text, msg...)
-	log.Println("[WARN] ", msgText)
+	log.Println("[WARN]  ", msgText)
 }
 
 func ERROR(text string, msg ...interface{}) {

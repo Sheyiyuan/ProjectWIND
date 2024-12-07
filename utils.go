@@ -15,7 +15,7 @@ import (
 
 func initCore() string {
 	// 初始化日志记录器
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime)
 	log.SetPrefix("[WIND] ")
 
 	LOG.INFO("正在初始化WIND配置文件...")
@@ -128,6 +128,9 @@ func checkAndUpdateConfig(configPath string) error {
 	if coreConfig.PasswordHash == "" {
 		coreConfig.PasswordHash = ""
 	}
+	if coreConfig.Token == "" {
+		coreConfig.Token = ""
+	}
 
 	formattedJSON, err := json.MarshalIndent(coreConfig, "", "  ")
 	if err != nil {
@@ -193,7 +196,7 @@ func startWebUI() {
 		//初始化
 		logFile := initCore()
 		// 设置日志输出到文件
-		log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+		log.SetFlags(log.Ldate | log.Ltime)
 		log.SetPrefix("[WIND] ")
 		// 打开日志文件
 		file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -220,7 +223,7 @@ func registerService() {
 	//初始化
 	logFile := initCore()
 	// 设置日志输出到文件
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime)
 	log.SetPrefix("[WIND] ")
 	// 打开日志文件
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -242,7 +245,7 @@ func startProtocol() {
 	//初始化
 	logFile := initCore()
 	// 设置日志输出到文件
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime)
 	log.SetPrefix("[WIND] ")
 	// 打开日志文件
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -257,6 +260,7 @@ func startProtocol() {
 	}(file)
 	// 设置日志输出到文件
 	log.SetOutput(io.MultiWriter(os.Stdout, file))
+	ReloadApps()
 	//从配置文件中读取配置信息
 	LOG.INFO("正在启动WIND协议服务...")
 	var config typed.CoreConfigInfo
@@ -278,10 +282,12 @@ func startProtocol() {
 	}
 	//获取协议地址
 	protocolAddr := config.ProtocolAddr
+	//获取token
+	token := config.Token
 	//链接协议
 	// 启动 WebSocket 处理程序
 	LOG.INFO("正在启动WebSocket链接程序...")
-	err = core.WebSocketHandler(protocolAddr)
+	err = core.WebSocketHandler(protocolAddr, token)
 	if err != nil {
 		// 如果发生错误，记录错误并退出程序
 		LOG.FATAL("Failed to start WebSocket link program: %v", err)
@@ -295,4 +301,10 @@ func AutoSave() {
 		//TODO: 这里要添加自动保存的代码
 		time.Sleep(time.Second * 60)
 	}
+}
+
+func ReloadApps() {
+	LOG.INFO("正在重新加载应用...")
+	total, success := core.ReloadApps()
+	LOG.INFO("应用重新加载完成，共加载%d个应用，成功加载%d个应用。", total, success)
 }

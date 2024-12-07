@@ -39,8 +39,8 @@ func main() {
 	}
 	if cmdArgs[0] == "-p" || cmdArgs[0] == "--protocol" {
 		// 连接到协议端
-		startProtocol()
 		go AutoSave()
+		startProtocol()
 		return
 	}
 	fmt.Println("Invalid command.")

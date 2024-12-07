@@ -15,7 +15,7 @@ import (
 var gProtocolAddr string
 
 // WebSocketHandler 接收WebSocket连接处的消息并处理
-func WebSocketHandler(protocolAddr string) error {
+func WebSocketHandler(protocolAddr string, token string) error {
 	// 保存全局变量
 	gProtocolAddr = protocolAddr
 	// 解析连接URL
@@ -25,10 +25,18 @@ func WebSocketHandler(protocolAddr string) error {
 		return err
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	// 创建一个带有自定义头的HTTP请求
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		LOG.ERROR("Dial error: %v", err)
-		return err
+		LOG.FATAL("创建请求出错:%v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	// 配置WebSocket连接升级器
+	dialer := websocket.DefaultDialer
+	// 使用升级器建立WebSocket连接
+	conn, _, err := dialer.Dial(req.URL.String(), req.Header)
+	if err != nil {
+		LOG.FATAL("建立WebSocket连接出错:%v", err)
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
@@ -107,8 +115,8 @@ func processMessage(messageType int, message []byte) {
 		}
 	default:
 		{
-			// 打印接收到的消息
-			LOG.WARN("Received unknown event: %s", message)
+			// 此处为api请求响应数据，通过channel返回给调用者
+			return
 		}
 	}
 }

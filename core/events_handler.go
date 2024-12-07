@@ -2,14 +2,14 @@ package core
 
 import (
 	"ProjectWIND/LOG"
-	"ProjectWIND/typed"
+	"ProjectWIND/wba"
 	"encoding/json"
 	"fmt"
 	"strings"
 )
 
 func HandleMessage(msgJson []byte) {
-	var msg typed.MessageEventInfo
+	var msg wba.MessageEventInfo
 	err := json.Unmarshal(msgJson, &msg)
 	if err != nil {
 		LOG.ERROR("Unmarshalling message: %v", err)
@@ -18,18 +18,16 @@ func HandleMessage(msgJson []byte) {
 	LOG.INFO("收到消息:(来自：%v-%v:%v-%v)%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, msg.RawMessage)
 	//如果消息文本内容为bot，发送框架信息。
 	cmd, args := CmdSplit(msg)
-	_, ok := CmdList[cmd]
+	_, ok := CmdMap[cmd]
 	if ok {
-		err = CmdList[cmd].Run(cmd, args, msg)
-		if err != nil {
-			LOG.ERROR("消息发送失败: %v", err)
-		}
+		LOG.DEBUG("执行命令：%v %v", cmd, args)
+		CmdMap[cmd].SOLVE(args, msg)
 	}
 	// TODO: 处理消息内容
 }
 
 func HandleNotice(msgJson []byte) {
-	var notice typed.NoticeEventInfo
+	var notice wba.NoticeEventInfo
 	err := json.Unmarshal(msgJson, &notice)
 	if err != nil {
 		LOG.ERROR("Unmarshalling notice: %v", err)
@@ -38,7 +36,7 @@ func HandleNotice(msgJson []byte) {
 }
 
 func HandleRequest(msgJson []byte) {
-	var request typed.NoticeEventInfo
+	var request wba.NoticeEventInfo
 	err := json.Unmarshal(msgJson, &request)
 	if err != nil {
 		LOG.ERROR("Unmarshalling request: %v", err)
@@ -47,7 +45,7 @@ func HandleRequest(msgJson []byte) {
 }
 
 func HandleMetaEvent(msgJson []byte) {
-	var meta typed.NoticeEventInfo
+	var meta wba.NoticeEventInfo
 	err := json.Unmarshal(msgJson, &meta)
 	if err != nil {
 		LOG.ERROR("Unmarshalling meta: %v", err)
@@ -55,7 +53,7 @@ func HandleMetaEvent(msgJson []byte) {
 	// TODO: 处理元事件
 }
 
-func CmdSplit(msg typed.MessageEventInfo) (string, []string) {
+func CmdSplit(msg wba.MessageEventInfo) (string, []string) {
 	text := msg.RawMessage
 	if strings.HasPrefix(text, fmt.Sprintf("[CQ:at,qq=%d]", msg.SelfId)) {
 		text = strings.TrimPrefix(text, fmt.Sprintf("[CQ:at,qq=%d]", msg.SelfId))
@@ -68,9 +66,10 @@ func CmdSplit(msg typed.MessageEventInfo) (string, []string) {
 	for _, prefix := range cmdPrefix {
 		if strings.HasPrefix(text, prefix) {
 			text = strings.TrimPrefix(text, prefix)
-			for cmd := range CmdList {
+			for cmd := range CmdMap {
 				if strings.HasPrefix(text, cmd) {
 					text = strings.TrimPrefix(text, cmd)
+					text = strings.TrimPrefix(text, " ")
 					return cmd, strings.Split(text, " ")
 				}
 			}
@@ -79,7 +78,7 @@ func CmdSplit(msg typed.MessageEventInfo) (string, []string) {
 	return "", []string{}
 }
 
-func statusCheck(msg typed.MessageEventInfo) bool {
+func statusCheck(msg wba.MessageEventInfo) bool {
 	//TODO: 检查当前组群工作状态
 	return false
 }
