@@ -359,7 +359,11 @@ func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, 
 	return
 }
 
-// 2.有响应API，使用http协议处理
+// 2.有响应API，需添加echo字段
+
+func (a *apiInfo) GetLoginInfo(flag string, approve bool) {
+
+}
 
 var AppApi apiInfo
 

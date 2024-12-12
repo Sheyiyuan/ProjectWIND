@@ -115,6 +115,26 @@ func processMessage(messageType int, message []byte) {
 		}
 	default:
 		{
+			messageMap := make(map[string]interface{})
+			err := json.Unmarshal(message, &messageMap)
+			if err != nil {
+				LOG.ERROR("Unmarshal error when handling api response message: %v", err)
+				return
+			}
+			if messageMap["status"] != "ok" {
+				LOG.ERROR("API response error: %v", messageMap["status"])
+				return
+			}
+			if messageMap["echo"] == "" {
+				LOG.WARN("Unknown API response: %v", messageMap["echo"])
+				return
+			}
+			apiResp := make(map[string]interface{})
+			apiResp["uuid"] = messageMap["echo"]
+			ApiChan := make(chan map[string]interface{})
+			go func(apiResp map[string]interface{}) {
+				ApiChan <- apiResp
+			}(apiResp)
 			// 此处为api请求响应数据，通过channel返回给调用者
 			return
 		}
