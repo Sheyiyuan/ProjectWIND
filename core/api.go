@@ -4,7 +4,6 @@ import (
 	"ProjectWIND/LOG"
 	"ProjectWIND/wba"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 )
 
@@ -48,13 +47,8 @@ func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape b
 	}
 	messageData.Params.Message = message
 	messageData.Params.AutoEscape = autoEscape
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("发送消息时，构建JSON数据失败: %v", err)
-		return
-	}
 	// 发送消息
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("发送消息时，发送失败: %v", err)
 		return
@@ -71,13 +65,8 @@ func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoE
 	messageData.Params.UserId = msg.UserId
 	messageData.Params.Message = message
 	messageData.Params.AutoEscape = autoEscape
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("发送消息(SendPrivateMsg)时，构建JSON数据失败: %v", err)
-		return
-	}
 	// 发送消息
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("发送消息(SendPrivateMsg)时，发送失败: %v", err)
 		return
@@ -94,13 +83,8 @@ func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEsc
 	messageData.Params.GroupId = msg.GroupId
 	messageData.Params.Message = message
 	messageData.Params.AutoEscape = autoEscape
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("发送消息(SendGroupMsg)时，构建JSON数据失败: %v", err)
-		return
-	}
 	// 发送消息
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("发送消息(SendGroupMsg)时，发送失败: %v", err)
 		return
@@ -115,12 +99,7 @@ func (a *apiInfo) DeleteMsg(msg wba.MessageEventInfo) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "delete_msg"
 	messageData.Params.MessageId = msg.MessageId
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("撤回消息(DeleteMsg)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("撤回消息(DeleteMsg)时，发送失败: %v", err)
 		return
@@ -136,12 +115,7 @@ func (a *apiInfo) SendLike(userId int64, times int) {
 	messageData.Action = "send_like"
 	messageData.Params.UserId = userId
 	messageData.Params.Times = times
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("发送赞(SendLike)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("发送赞(SendLike)时，发送失败: %v", err)
 		return
@@ -157,12 +131,7 @@ func (a *apiInfo) SetGroupKick(groupId int64, userId int64, rejectAddRequest boo
 	messageData.Params.GroupId = groupId
 	messageData.Params.UserId = userId
 	messageData.Params.RejectAddRequest = rejectAddRequest
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("移出群聊(SetGroupKick)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("移出群聊(SetGroupKick)时，发送失败: %v", err)
 		return
@@ -178,12 +147,7 @@ func (a *apiInfo) SetGroupBan(groupId int64, userId int64, duration int32) {
 	messageData.Params.GroupId = groupId
 	messageData.Params.UserId = userId
 	messageData.Params.Duration = duration
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("禁言群成员(SetGroupBan)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("禁言群成员(SetGroupBan)时，执行失败: %v", err)
 		return
@@ -198,12 +162,7 @@ func (a *apiInfo) SetGroupWholeBan(groupId int64, enable bool) {
 	messageData.Action = "set_group_whole_ban"
 	messageData.Params.GroupId = groupId
 	messageData.Params.Enable = enable
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("设置全员禁言(SetGroupWholeBan)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("设置全员禁言(SetGroupWholeBan)时，执行失败: %v", err)
 		return
@@ -219,12 +178,7 @@ func (a *apiInfo) SetGroupAdmin(groupId int64, userId int64, enable bool) {
 	messageData.Params.GroupId = groupId
 	messageData.Params.UserId = userId
 	messageData.Params.Enable = enable
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("设置群管理员(SetGroupAdmin)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("设置群管理员(SetGroupAdmin)时，执行失败: %v", err)
 		return
@@ -240,12 +194,7 @@ func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
 	messageData.Params.GroupId = groupId
 	messageData.Params.UserId = userId
 	messageData.Params.Card = card
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("设置群名片(SetGroupCard)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("设置群名片(SetGroupCard)时，执行失败: %v", err)
 		return
@@ -255,17 +204,12 @@ func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
 }
 
 // SetGroupName 设置群名称(可能需要群主或管理员权限)
-func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
+func (a apiInfo) SetGroupName(groupId int64, groupName string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_name"
 	messageData.Params.GroupId = groupId
 	messageData.Params.GroupName = groupName
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("设置群名称(SetGroupName)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("设置群名称(SetGroupName)时，执行失败: %v", err)
 		return
@@ -275,17 +219,12 @@ func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
 }
 
 // SetGroupLeave 退出群聊
-func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
+func (a apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_leave"
 	messageData.Params.GroupId = groupId
 	messageData.Params.IsDismiss = isDismiss
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("退出群聊(SetGroupLeave)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("退出群聊(SetGroupLeave)时，执行失败: %v", err)
 		return
@@ -295,19 +234,14 @@ func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
 }
 
 // SetGroupSpecialTitle 设置群专属头衔(需要群主权限)
-func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string, duration int32) {
+func (a apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string, duration int32) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_special_title"
 	messageData.Params.GroupId = groupId
 	messageData.Params.UserId = userId
 	messageData.Params.SpecialTitle = specialTitle
 	messageData.Params.Duration = duration
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("设置群特殊头衔(SetGroupSpecialTitle)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("设置群特殊头衔(SetGroupSpecialTitle)时，执行失败: %v", err)
 		return
@@ -317,18 +251,13 @@ func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle
 }
 
 // SetFriendAddRequest 处理加好友请求
-func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) {
+func (a apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_friend_add_request"
 	messageData.Params.Flag = flag
 	messageData.Params.Approve = approve
 	messageData.Params.Remark = remark
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("处理加好友请求(SetFriendAddRequest)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("处理加好友请求(SetFriendAddRequest)时，执行失败: %v", err)
 		return
@@ -338,19 +267,14 @@ func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) 
 }
 
 // SetGroupAddRequest 处理加群请求/邀请
-func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, reason string) {
+func (a apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, reason string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_add_request"
 	messageData.Params.Flag = flag
 	messageData.Params.SubType = subType
 	messageData.Params.Approve = approve
 	messageData.Params.Reason = reason
-	messageJson, err := json.Marshal(messageData)
-	if err != nil {
-		LOG.ERROR("处理加群请求/邀请(SetGroupAddRequest)时，构建JSON数据失败: %v", err)
-		return
-	}
-	err = wsAPI(messageJson)
+	_, err := wsAPI(messageData)
 	if err != nil {
 		LOG.ERROR("处理加群请求/邀请(SetGroupAddRequest)时，执行失败: %v", err)
 		return
@@ -361,8 +285,22 @@ func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, 
 
 // 2.有响应API，需添加echo字段
 
-func (a *apiInfo) GetLoginInfo(flag string, approve bool) {
-
+func (a apiInfo) GetLoginInfo() (Response wba.APIResponseInfo) {
+	LOG.INFO("获取登录信息(GetLoginInfo)")
+	var messageData wba.APIRequestInfo
+	var err error
+	messageData.Action = "get_login_info"
+	messageData.Echo, err = GenerateUUID()
+	if err != nil {
+		LOG.ERROR("获取登录信息(GetLoginInfo)时，生成UUID失败: %v", err)
+		return wba.APIResponseInfo{}
+	}
+	Response, err = wsAPI(messageData)
+	if err != nil {
+		LOG.ERROR("获取登录信息(GetLoginInfo)时，执行失败: %v", err)
+		return wba.APIResponseInfo{}
+	}
+	return Response
 }
 
 var AppApi apiInfo

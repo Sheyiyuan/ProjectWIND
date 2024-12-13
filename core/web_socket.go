@@ -2,22 +2,22 @@ package core
 
 import (
 	"ProjectWIND/LOG"
-	"bytes"
+	"ProjectWIND/wba"
 	"encoding/json"
 	"fmt"
-	"io"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
-
-	"github.com/gorilla/websocket"
 )
 
 var gProtocolAddr string
+var gToken string
 
 // WebSocketHandler 接收WebSocket连接处的消息并处理
 func WebSocketHandler(protocolAddr string, token string) error {
 	// 保存全局变量
 	gProtocolAddr = protocolAddr
+	gToken = token
 	// 解析连接URL
 	u, err := url.Parse(protocolAddr)
 	if err != nil {
@@ -25,7 +25,7 @@ func WebSocketHandler(protocolAddr string, token string) error {
 		return err
 	}
 
-	// 创建一个带有自定义头的HTTP请求
+	// 创建一个带有Authorization头的HTTP请求
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		LOG.FATAL("创建请求出错:%v", err)
@@ -44,13 +44,13 @@ func WebSocketHandler(protocolAddr string, token string) error {
 			LOG.ERROR("Close error: %v", err)
 		}
 	}(conn)
-
 	LOG.INFO("WebSocket connection to %v established.", u.String())
+	logInfo := AppApi.GetLoginInfo()
+	LOG.INFO("连接到账号: %v（%v）", logInfo.Data.Nickname, logInfo.Data.UserId)
 
 	// 定义通道,缓存消息和消息类型，防止消息处理阻塞
 	messageChan := make(chan []byte, 32)
 	messageTypeChan := make(chan int, 32)
-
 	for {
 		// 接收消息并放入通道
 		messageType, message, err := conn.ReadMessage()
@@ -113,46 +113,34 @@ func processMessage(messageType int, message []byte) {
 			HandleMetaEvent(message)
 			return
 		}
-	default:
-		{
-			messageMap := make(map[string]interface{})
-			err := json.Unmarshal(message, &messageMap)
-			if err != nil {
-				LOG.ERROR("Unmarshal error when handling api response message: %v", err)
-				return
-			}
-			if messageMap["status"] != "ok" {
-				LOG.ERROR("API response error: %v", messageMap["status"])
-				return
-			}
-			if messageMap["echo"] == "" {
-				LOG.WARN("Unknown API response: %v", messageMap["echo"])
-				return
-			}
-			apiResp := make(map[string]interface{})
-			apiResp["uuid"] = messageMap["echo"]
-			ApiChan := make(chan map[string]interface{})
-			go func(apiResp map[string]interface{}) {
-				ApiChan <- apiResp
-			}(apiResp)
-			// 此处为api请求响应数据，通过channel返回给调用者
-			return
-		}
 	}
 }
 
 // wsSendMessage 向WebSocket服务器发送消息并返回发送状态
-func wsAPI(body []byte) error {
-	// 解析连接URL
-	u, err := url.Parse(fmt.Sprintf("%v/api", gProtocolAddr))
+func wsAPI(body wba.APIRequestInfo) (Response wba.APIResponseInfo, err error) {
+	// 序列化请求体
+	bodyBytes, err := json.Marshal(body)
 	if err != nil {
-		return fmt.Errorf("无效的URL: %v", err)
+		return wba.APIResponseInfo{}, err
 	}
-
-	// 建立连接
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	// 解析连接URL
+	u, err := url.Parse(gProtocolAddr)
 	if err != nil {
-		return fmt.Errorf("连接失败: %v", err)
+		LOG.ERROR("Parse URL error: %v", err)
+		return wba.APIResponseInfo{}, err
+	}
+	// 创建一个带有Authorization头的HTTP请求
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		LOG.FATAL("创建请求出错:%v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+gToken)
+	// 配置WebSocket连接升级器
+	dialer := websocket.DefaultDialer
+	// 使用升级器建立WebSocket连接
+	conn, _, err := dialer.Dial(req.URL.String(), req.Header)
+	if err != nil {
+		LOG.FATAL("建立WebSocket连接出错:%v", err)
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
@@ -160,36 +148,44 @@ func wsAPI(body []byte) error {
 			LOG.ERROR("Close error: %v", err)
 		}
 	}(conn)
-
-	// 发送请求
-	err = conn.WriteMessage(websocket.TextMessage, body)
+	err = conn.WriteMessage(websocket.TextMessage, bodyBytes)
 	if err != nil {
-		return fmt.Errorf("请求发送失败: %v", err)
+		return wba.APIResponseInfo{}, fmt.Errorf("请求发送失败: %v", err)
 	}
-
-	return nil
-}
-
-func httpAPI(method, action string, body []byte) (int, []byte, error) {
-	urlStr := fmt.Sprintf("%v/api/%v", gProtocolAddr, action)
-	resp, err := http.Post(urlStr, "application/json", bytes.NewReader(body))
-	if err != nil {
-		return 0, nil, fmt.Errorf("请求失败: %v", err)
-	}
-	defer func(resp *http.Response) {
-		err := resp.Body.Close()
-		if err != nil {
-			LOG.ERROR("Close error: %v", err)
+	if body.Action == "get_group_list" || body.Action == "get_member_list" {
+		// 处理get_group_list和get_member_list请求,直接返回
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				return wba.APIResponseInfo{}, fmt.Errorf("响应接收失败: %v", err)
+			}
+			var Response wba.APIResponseInfo
+			err = json.Unmarshal(message, &Response)
+			if err != nil {
+				return wba.APIResponseInfo{}, fmt.Errorf("unmarshal error: %v", err)
+			}
+			if Response.Echo == body.Echo {
+				return Response, nil
+			}
 		}
-	}(resp)
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, nil, fmt.Errorf("请求失败: %v", resp.Status)
 	}
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, nil, fmt.Errorf("读取响应失败: %v", err)
+	//检查是否含有echo字段
+	if body.Echo != "" {
+		// 接收响应消息,直到收到echo字段一致的消息
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				return wba.APIResponseInfo{}, fmt.Errorf("响应接收失败: %v", err)
+			}
+			var Response wba.APIResponseInfo
+			err = json.Unmarshal(message, &Response)
+			if err != nil {
+				return wba.APIResponseInfo{}, fmt.Errorf("unmarshal error: %v", err)
+			}
+			if Response.Echo == body.Echo {
+				return Response, nil
+			}
+		}
 	}
-	return resp.StatusCode, body, nil
+	return wba.APIResponseInfo{}, nil
 }

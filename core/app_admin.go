@@ -60,7 +60,7 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			LOG.ERROR("Error initializing app %s: %v", pluginPath, err)
 		}
 
-		//CmdMap = mergeMaps(CmdMap, app.Get())
+		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
 		LOG.INFO("App %s initialized successfully", pluginPath)
 		return 1, 1
 
