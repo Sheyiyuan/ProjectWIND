@@ -44,7 +44,9 @@ func WebSocketHandler(protocolAddr string, token string) error {
 			LOG.ERROR("Close error: %v", err)
 		}
 	}(conn)
-	LOG.INFO("WebSocket connection to %v established.", u.String())
+	LOG.INFO("已连接到WebSocket服务器: %v", u.String())
+	ProtocolInfo := AppApi.GetVersionInfo()
+	LOG.INFO("协议端信息: %v-%v", ProtocolInfo.Data.AppName, ProtocolInfo.Data.AppVersion)
 	logInfo := AppApi.GetLoginInfo()
 	LOG.INFO("连接到账号: %v（%v）", logInfo.Data.Nickname, logInfo.Data.UserId)
 

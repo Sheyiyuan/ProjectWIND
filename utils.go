@@ -297,9 +297,9 @@ func startProtocol() {
 
 func AutoSave() {
 	for {
+		time.Sleep(time.Second * 60)
 		LOG.INFO("自动保存")
 		//TODO: 这里要添加自动保存的代码
-		time.Sleep(time.Second * 60)
 	}
 }
 

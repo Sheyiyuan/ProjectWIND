@@ -39,7 +39,7 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		pluginPath := filepath.Join(appsDir, file.Name())
 		p, err := plugin.Open(pluginPath)
 		if err != nil {
-			LOG.ERROR("Error opening app %s: %v\n", pluginPath, err)
+			LOG.ERROR("Error opening app %s: %v", pluginPath, err)
 			return 1, 0
 		}
 

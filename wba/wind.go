@@ -28,6 +28,9 @@ type WindAPI interface {
 	SetFriendAddRequest(flag string, approve bool, remark string)
 	SetGroupAddRequest(flag string, subType string, approve bool, reason string)
 	GetLoginInfo() APIResponseInfo
+	GetVersionInfo() APIResponseInfo
+	LogWith(level string, log string, args ...interface{})
+	Log(log string, args ...interface{})
 }
 
 type AppInfo struct {
@@ -279,6 +282,9 @@ type ParamsInfo struct {
 	NoCache          bool   `json:"no_cache,omitempty"`
 	File             string `json:"file,omitempty"`
 	Times            int    `json:"times,omitempty"`
+	Domain           string `json:"domain,omitempty"`
+	OutFormat        string `json:"out_format,omitempty"`
+	Delay            int32  `json:"delay,omitempty"`
 }
 
 type APIRequestInfo struct {
