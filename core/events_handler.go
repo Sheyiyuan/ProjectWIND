@@ -12,7 +12,7 @@ func HandleMessage(msgJson []byte) {
 	var msg wba.MessageEventInfo
 	err := json.Unmarshal(msgJson, &msg)
 	if err != nil {
-		LOG.ERROR("Unmarshalling message: %v", err)
+		LOG.ERROR("消息事件反序列化失败: %v", err)
 	}
 	// 处理消息
 	LOG.INFO("收到消息:(来自：%v-%v:%v-%v)%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, msg.RawMessage)
@@ -30,7 +30,7 @@ func HandleNotice(msgJson []byte) {
 	var notice wba.NoticeEventInfo
 	err := json.Unmarshal(msgJson, &notice)
 	if err != nil {
-		LOG.ERROR("Unmarshalling notice: %v", err)
+		LOG.ERROR("通知事件反序列化失败: %v", err)
 	}
 	// TODO: 处理通知
 }
@@ -39,7 +39,7 @@ func HandleRequest(msgJson []byte) {
 	var request wba.NoticeEventInfo
 	err := json.Unmarshal(msgJson, &request)
 	if err != nil {
-		LOG.ERROR("Unmarshalling request: %v", err)
+		LOG.ERROR("请求事件反序列化失败: %v", err)
 	}
 	// TODO: 处理请求
 }
@@ -48,7 +48,7 @@ func HandleMetaEvent(msgJson []byte) {
 	var meta wba.NoticeEventInfo
 	err := json.Unmarshal(msgJson, &meta)
 	if err != nil {
-		LOG.ERROR("Unmarshalling meta: %v", err)
+		LOG.ERROR("元事件反序列化失败: %v", err)
 	}
 	// TODO: 处理元事件
 }

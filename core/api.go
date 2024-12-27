@@ -515,13 +515,13 @@ func (a *apiInfo) GetGroupMemberList(groupId int64) (Response wba.APIResponseInf
 }
 
 // GetGroupHonorInfo 获取群荣誉信息
-func (a *apiInfo) GetGroupHonorInfo(groupId int64, userId int64) (Response wba.APIResponseInfo) {
+func (a *apiInfo) GetGroupHonorInfo(groupId int64, Type string) (Response wba.APIResponseInfo) {
 	LOG.INFO("获取群荣誉信息(GetGroupHonorInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_group_honor_info"
 	messageData.Params.GroupId = groupId
-	messageData.Params.UserId = userId
+	messageData.Params.Type = Type
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
 		LOG.ERROR("获取群荣誉信息(GetGroupHonorInfo)时，生成UUID失败: %v", err)
@@ -727,6 +727,14 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 
 //database模块
 //TODO: 数据库模块待实现
+
+// 文件管理模块
+//TODO: 文件管理模块待实现
+
+//终端连接模块
+//TODO: 终端模块待实现
+
+//核心信息调用模块
 
 var AppApi apiInfo
 

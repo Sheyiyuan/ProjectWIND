@@ -16,7 +16,7 @@ func ReloadApps() (total int, success int) {
 	total = 0
 	success = 0
 	if err != nil {
-		LOG.ERROR("Error reading apps directory:%v", err)
+		LOG.ERROR("加载应用所在目录失败:%v", err)
 		return
 	}
 
@@ -39,29 +39,29 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		pluginPath := filepath.Join(appsDir, file.Name())
 		p, err := plugin.Open(pluginPath)
 		if err != nil {
-			LOG.ERROR("Error opening app %s: %v", pluginPath, err)
+			LOG.ERROR("打开应用 %s 时发生错误: %v", pluginPath, err)
 			return 1, 0
 		}
 
 		initSymbol, err := p.Lookup("Application")
 		if err != nil {
-			LOG.ERROR("Error finding interface Application in app %s: %v", pluginPath, err)
+			LOG.ERROR("找不到应用 %s 提供的 Application 接口: %v", pluginPath, err)
 			return 1, 0
 		}
 
 		app, ok := initSymbol.(wba.APP)
 		if !ok {
-			LOG.ERROR("init symbol in app %s is not a right type", pluginPath)
+			LOG.ERROR("应用 %s 提供的 Application 接口不是 wba.APP 类型", pluginPath)
 			return 1, 0
 		}
 
 		err = app.Init(&AppApi)
 		if err != nil {
-			LOG.ERROR("Error initializing app %s: %v", pluginPath, err)
+			LOG.ERROR("初始化应用 %s 失败: %v", pluginPath, err)
 		}
 
 		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
-		LOG.INFO("App %s initialized successfully", pluginPath)
+		LOG.INFO("应用 %s 加载成功", pluginPath)
 		return 1, 1
 
 	}

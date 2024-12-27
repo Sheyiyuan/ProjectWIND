@@ -1,13 +1,11 @@
 package wba
 
 import (
-	"errors"
 	"fmt"
 )
 
 type APP interface {
 	Get() AppInfo
-	Run(cmd string, args []string, msg MessageEventInfo) error
 	Init(api WindAPI) error
 }
 
@@ -29,113 +27,132 @@ type WindAPI interface {
 	SetGroupAddRequest(flag string, subType string, approve bool, reason string)
 	GetLoginInfo() APIResponseInfo
 	GetVersionInfo() APIResponseInfo
+	GetMsg(msgId int32) APIResponseInfo
+	GetForwardMsg(msgId string) APIResponseInfo
+	GetGroupList() APIResponseInfo
+	GetGroupMemberList(groupId int64) APIResponseInfo
+	GetGroupMemberInfo(groupId int64, userId int64, noCache bool) APIResponseInfo
+	GetFriendList() APIResponseInfo
+	GetStrangerInfo(userId int64, noCache bool) APIResponseInfo
+	GetGroupInfo(groupId int64, noCache bool) APIResponseInfo
+	GetGroupHonorInfo(groupId int64, Type string) APIResponseInfo
+	GetStatus() APIResponseInfo
+	GetCookies(domain string) APIResponseInfo
+	GetCSRFToken() APIResponseInfo
+	GetCredentials(domain string) APIResponseInfo
+	GetImage(file string) APIResponseInfo
+	GetRecord(file string, outFormat string) APIResponseInfo
+	CanSendImage() APIResponseInfo
+	CanSendRecord() APIResponseInfo
+	SetRestart(delay int32)
+	CleanCache()
 	LogWith(level string, log string, args ...interface{})
 	Log(log string, args ...interface{})
 }
 
 type AppInfo struct {
-	name        string
-	version     string
-	author      string
-	description string
-	namespace   string
-	webUrl      string
-	license     string
-	appType     string
-	rule        string
-	CmdMap      map[string]Cmd
+	Name                string
+	Version             string
+	Author              string
+	Description         string
+	Namespace           string
+	Homepage            string
+	License             string
+	AppType             string
+	Rule                string
+	CmdMap              map[string]Cmd
+	MessageEventHandler func(msg MessageEventInfo)
+	NoticeEventHandler  func(msg NoticeEventInfo)
+	RequestEventHandler func(msg RequestEventInfo)
+	MetaEventHandler    func(msg MetaEventInfo)
+	ScheduledTasks      map[string]ScheduledTaskInfo
+	API                 map[string]interface{}
 }
 
-func (ei AppInfo) Get() AppInfo {
-	return ei
+func (ai AppInfo) Get() AppInfo {
+	return ai
 }
 
-func (ei *AppInfo) Run(cmd string, args []string, msg MessageEventInfo) error {
-	_, ok := ei.CmdMap[cmd]
-	if !ok {
-		return errors.New("cmd not found")
-	}
-	ei.CmdMap[cmd].SOLVE(args, msg)
-	return nil
-}
-
-func (ei *AppInfo) Init(api WindAPI) error {
+func (ai *AppInfo) Init(api WindAPI) error {
 	Wind = api
 	return nil
 }
 
-func (ei *AppInfo) AddCmd(name string, cmd Cmd) error {
-	ei.CmdMap[name] = cmd
-	return nil
+func (ai *AppInfo) AddCmd(name string, cmd Cmd) {
+	ai.CmdMap[name] = cmd
+}
+
+func (ai *AppInfo) AddNoticeEventHandler(ScheduledTask ScheduledTaskInfo) {
+	ai.ScheduledTasks[ScheduledTask.Name] = ScheduledTask
 }
 
 type AppInfoOption func(ei *AppInfo)
 
 func WithName(name string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.name = name
+		ei.Name = name
 	}
 }
 
 func WithVersion(version string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.version = version
+		ei.Version = version
 	}
 }
 
 func WithAuthor(author string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.author = author
+		ei.Author = author
 	}
 }
 
 func WithDescription(description string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.description = description
+		ei.Description = description
 	}
 }
 
 func WithNamespace(namespace string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.namespace = namespace
+		ei.Namespace = namespace
 	}
 }
 
 func WithWebUrl(webUrl string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.webUrl = webUrl
+		ei.Homepage = webUrl
 	}
 }
 
 func WithLicense(license string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.license = license
+		ei.License = license
 	}
 }
 
 func WithAppType(appType string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.appType = appType
+		ei.AppType = appType
 	}
 }
 
 func WithRule(rule string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.rule = fmt.Sprintf("rule_%s", rule)
+		ei.Rule = fmt.Sprintf("rule_%s", rule)
 	}
 }
 
 func NewApp(opts ...AppInfoOption) AppInfo {
 	Ext := AppInfo{
-		name:        "Wind",
-		version:     "v1.0.0",
-		author:      "Wind",
-		description: "A simple and easy-to-use bot framework",
-		namespace:   "wind",
-		webUrl:      "https://github.com/Sheyiyuan/wind_app_model",
-		license:     "MIT",
-		appType:     "fun",
-		rule:        "none",
+		Name:        "Wind",
+		Version:     "v1.0.0",
+		Author:      "Wind",
+		Description: "A simple and easy-to-use bot framework",
+		Namespace:   "PUBLIC",
+		Homepage:    "https://github.com/Sheyiyuan/wind_app_model",
+		License:     "MIT",
+		AppType:     "fun",
+		Rule:        "none",
 		CmdMap:      make(map[string]Cmd),
 	}
 	for _, opt := range opts {
@@ -149,6 +166,15 @@ func NewCmd(name string, description string, solve func(args []string, msg Messa
 		NAME:  name,
 		DESC:  description,
 		SOLVE: solve,
+	}
+}
+
+func NewScheduledTask(name string, description string, cron string, task func()) ScheduledTaskInfo {
+	return ScheduledTaskInfo{
+		Name: name,
+		Desc: description,
+		Cron: cron,
+		Task: task,
 	}
 }
 
@@ -214,7 +240,7 @@ type MetaEventInfo struct {
 
 type FileInfo struct {
 	Id    string `json:"id,omitempty"`
-	Name  string `json:"name,omitempty"`
+	Name  string `json:"Name,omitempty"`
 	Size  int64  `json:"size,omitempty"`
 	Busid int64  `json:"bucket,omitempty"`
 }
@@ -233,7 +259,7 @@ type SenderInfo struct {
 
 type AnonymousInfo struct {
 	Id   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
+	Name string `json:"Name,omitempty"`
 	Flag string `json:"flag,omitempty"`
 }
 
@@ -363,9 +389,10 @@ type HonorInfo struct {
 	UserId      int64  `json:"user_id,omitempty"`
 	Nickname    string `json:"nickname,omitempty"`
 	Avatar      string `json:"avatar,omitempty"`
-	Description string `json:"description,omitempty"`
+	Description string `json:"Description,omitempty"`
 }
 
+// SegmentInfo 消息段
 type SegmentInfo struct {
 	Type string          `json:"type,omitempty"`
 	Data SegmentDataInfo `json:"data,omitempty"`
@@ -386,6 +413,13 @@ type SegmentDataInfo struct {
 	Image    string `json:"image,omitempty"`
 	Video    string `json:"video,omitempty"`
 	Data     string `json:"data,omitempty"`
+}
+
+type ScheduledTaskInfo struct {
+	Name string `json:"Name,omitempty"`
+	Desc string `json:"desc,omitempty"`
+	Task func() `json:"task,omitempty"`
+	Cron string `json:"cron,omitempty"`
 }
 
 var Wind WindAPI

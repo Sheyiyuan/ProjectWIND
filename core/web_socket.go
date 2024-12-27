@@ -155,7 +155,6 @@ func wsAPI(body wba.APIRequestInfo) (Response wba.APIResponseInfo, err error) {
 		return wba.APIResponseInfo{}, fmt.Errorf("请求发送失败: %v", err)
 	}
 	if body.Action == "get_group_list" || body.Action == "get_member_list" {
-		// 处理get_group_list和get_member_list请求,直接返回
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {

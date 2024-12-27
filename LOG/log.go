@@ -7,7 +7,10 @@ import (
 )
 
 func DEBUG(text string, msg ...interface{}) {
-	pc, file, line, ok := runtime.Caller(2)
+	pc, file, line, ok := runtime.Caller(3)
+	if !ok {
+		pc, file, line, ok = runtime.Caller(2)
+	}
 	if ok {
 		funcName := runtime.FuncForPC(pc).Name()
 		log.Printf("[DEBUG]  [%s:%d %s()] %s\n", file, line, funcName, fmt.Sprintf(text, msg...))

@@ -22,7 +22,7 @@ func initCore() string {
 
 	err := checkAndUpdateConfig("./data/core.json")
 	if err != nil {
-		LOG.FATAL("Failed to initialize core.json file: %v", err)
+		LOG.FATAL("初始化时，加载配置文件 ./data/core.json 失败: %v", err)
 	}
 	// 创建日志文件
 	logFile := fmt.Sprintf("./data/log/WIND_CORE_%s.log", time.Now().Format("20060102150405"))
@@ -30,24 +30,24 @@ func initCore() string {
 	if os.IsNotExist(err) {
 		file, err := os.Create(logFile)
 		if err != nil {
-			LOG.FATAL("Failed to create log file: %v", err)
+			LOG.FATAL("初始化时，创建日志文件失败: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.FATAL("Failed to close log file: %v", err)
+				LOG.FATAL("无法关闭日志文件: %v", err)
 			}
 		}(file)
 	}
 
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		LOG.FATAL("Failed to open log file: %v", err)
+		LOG.FATAL("初始化时，无法打开日志文件: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			LOG.FATAL("Failed to close log file: %v", err)
+			LOG.FATAL("无法关闭日志文件: %v", err)
 		}
 	}(file)
 
@@ -63,7 +63,7 @@ func checkAndUpdateConfig(configPath string) error {
 		// 如果不存在，则创建该文件夹
 		err := os.Mkdir("./data/", 0755)
 		if err != nil {
-			LOG.FATAL("Failed to create data folder: %v", err)
+			LOG.FATAL("初始化时，创建data文件夹失败: %v", err)
 		}
 	}
 
@@ -72,12 +72,12 @@ func checkAndUpdateConfig(configPath string) error {
 		// 如果不存在，则创建该文件
 		file, err := os.Create("./data/core.json")
 		if err != nil {
-			LOG.FATAL("Failed to create core.json file: %v", err)
+			LOG.FATAL("初始化时，创建 ./data/core.json 配置文件失败: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.FATAL("Failed to close core.json file: %v", err)
+				LOG.FATAL("关闭 ./data/core.json 配置文件失败: %v", err)
 			}
 		}(file)
 	}
@@ -99,7 +99,7 @@ func checkAndUpdateConfig(configPath string) error {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			LOG.FATAL("Failed to close core.json file: %v", err)
+			LOG.FATAL("无法关闭配置文件 ./data/core.json: %v", err)
 		}
 	}(file)
 
@@ -140,19 +140,19 @@ func checkAndUpdateConfig(configPath string) error {
 	// 将格式化后的JSON字符串写入文件
 	file, err = os.Create("./data/core.json")
 	if err != nil {
-		LOG.FATAL("Error creating core.json file:%v", err)
+		LOG.FATAL("初始化时，创建 ./data/core.json 配置文件失败: %v", err)
 		return err
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			LOG.FATAL("Failed to close core.json file: %v", err)
+			LOG.FATAL("无法关闭配置文件 ./data/core.json: %v", err)
 		}
 	}(file)
 
 	_, err = file.Write(formattedJSON)
 	if err != nil {
-		LOG.FATAL("Error writing to core.json file: %v", err)
+		LOG.FATAL("初始化时，写入 ./data/core.json 配置文件失败: %v", err)
 		return err
 	}
 
@@ -169,23 +169,42 @@ func checkAndUpdateConfig(configPath string) error {
 
 	err = checkDataFolderExistence("./data/app/")
 	if err != nil {
-		LOG.FATAL("Failed to create app folder: %v", err)
+		LOG.FATAL("创建应用文件夹 ./data/app/ 失败: %v", err)
 		return err
 	}
 	err = checkDataFolderExistence("./data/images/")
 	if err != nil {
-		LOG.FATAL("Failed to create images folder: %v", err)
+		LOG.FATAL("创建图片文件夹 ./data/images/ 失败: %v", err)
+		return err
+	}
+	err = checkDataFolderExistence("./data/files/")
+	if err != nil {
+		LOG.FATAL("创建文件文件夹 ./data/files/ 失败: %v", err)
+		return err
+	}
+	err = checkDataFolderExistence("./data/videos/")
+	if err != nil {
+		LOG.FATAL("创建视频文件夹 ./data/videos/ 失败: %v", err)
+		return err
+	}
+	err = checkDataFolderExistence("./data/audios/")
+	if err != nil {
+		LOG.FATAL("创建音频文件夹 ./data/audios/ 失败: %v", err)
 		return err
 	}
 	err = checkDataFolderExistence("./data/database/")
 	if err != nil {
-		LOG.FATAL("Failed to create database folder: %v", err)
+		LOG.FATAL("创建数据库文件夹 ./data/database/ 失败: %v", err)
 		return err
 	}
 	err = checkDataFolderExistence("./data/log/")
 	if err != nil {
-		LOG.FATAL("Failed to create log folder: %v", err)
+		LOG.FATAL("创建日志文件夹 ./data/log/ 失败: %v", err)
 		return err
+	}
+	err = checkDataFolderExistence("./data/app/configs/")
+	if err != nil {
+		LOG.FATAL("创建应用配置文件夹 ./data/app/configs/ 失败: %v", err)
 	}
 
 	return nil
@@ -201,12 +220,12 @@ func startWebUI() {
 		// 打开日志文件
 		file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
-			LOG.FATAL("Failed to open log file: %v", err)
+			LOG.FATAL("打开日志文件失败: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.FATAL("Failed to close log file: %v", err)
+				LOG.FATAL("无法关闭日志文件: %v", err)
 			}
 		}(file)
 		// 设置日志输出到文件
@@ -228,12 +247,12 @@ func registerService() {
 	// 打开日志文件
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		LOG.FATAL("Failed to create log file: %v", err)
+		LOG.FATAL("无法打开日志文件: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			LOG.FATAL("Failed to close log file: %v", err)
+			LOG.FATAL("无法关闭日志文件: %v", err)
 		}
 	}(file)
 	// 设置日志输出到文件
@@ -250,12 +269,12 @@ func startProtocol() {
 	// 打开日志文件
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		LOG.FATAL("Failed to create log file: %v", err)
+		LOG.FATAL("无法打开日志文件: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			LOG.FATAL("Failed to close log file: %v", err)
+			LOG.FATAL("无法关闭日志文件: %v", err)
 		}
 	}(file)
 	// 设置日志输出到文件
@@ -266,19 +285,19 @@ func startProtocol() {
 	var config typed.CoreConfigInfo
 	file, err = os.Open("./data/core.json")
 	if err != nil {
-		LOG.FATAL("Failed to open core.json file: %v", err)
+		LOG.FATAL("无法打开配置文件 ./data/core.json: %v", err)
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			LOG.FATAL("Failed to close core.json file: %v", err)
+			LOG.FATAL("无法关闭配置文件 ./data/core.json: %v", err)
 		}
 	}(file)
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
 	if err != nil {
-		LOG.FATAL("Failed to decode config file when linking to protocol: %v", err)
+		LOG.FATAL("连接协议时，解析配置文件 ./data/core.json 失败: %v", err)
 	}
 	//获取协议地址
 	protocolAddr := config.ProtocolAddr
@@ -290,7 +309,7 @@ func startProtocol() {
 	err = core.WebSocketHandler(protocolAddr, token)
 	if err != nil {
 		// 如果发生错误，记录错误并退出程序
-		LOG.FATAL("Failed to start WebSocket link program: %v", err)
+		LOG.FATAL("连接协议时，启动 WebSocket 处理程序失败: %v", err)
 	}
 	return
 }
