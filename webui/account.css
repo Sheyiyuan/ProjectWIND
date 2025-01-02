@@ -1,0 +1,126 @@
+header {
+    display: flex;
+    align-items: flex-start; /* 让内容在垂直方向上对齐到顶部 */
+    padding: 0; /* 清除默认的内边距 */
+    margin: 0; /* 清除默认的外边距 */
+}
+
+/* 使h1居左上角 */
+header h1 {
+    text-align: left; /* 确保文字左对齐 */
+}
+
+/* 自定义 "点我添加一个" 链接的样式 */
+.account-section a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.account-section a:hover {
+    color: #0056b3;
+}
+
+/* 添加按钮的专属样式 */
+.add-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #28a745;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.add-button:hover {
+    background-color: #218838;
+    transform: scale(1.1);
+}
+
+/* 弹窗样式 */
+.modal {
+    position: fixed; /* 弹窗始终固定在屏幕上 */
+    top: 0;
+    left: 0;
+    width: 100%; /* 覆盖整个屏幕宽度 */
+    height: 100%; /* 覆盖整个屏幕高度 */
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+    display: flex; /* 使用 flexbox 布局 */
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+    z-index: 1000; /* 确保弹窗位于最顶层 */
+}
+
+.modal-content {
+    position: fixed; /* 让弹窗固定在屏幕上 */
+    top: 50%; /* 垂直居中 */
+    left: 50%; /* 水平居中 */
+    transform: translate(-50%, -50%); /* 偏移自身宽高的 50% 达到真正居中 */
+    background: #fff; /* 背景为白色 */
+    padding: 20px; /* 内边距 */
+    border-radius: 5px; /* 圆角 */
+    width: 100%;
+    max-width: 400px; /* 最大宽度 */
+    box-sizing: border-box; /* 包括 padding 的总宽度 */
+    text-align: left; /* 文本左对齐 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 添加轻微的阴影效果 */
+    z-index: 1001; /* 确保弹窗内容在遮罩层上方 */
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.modal-content label {
+    display: block;
+    margin: 10px 0 5px;
+}
+
+.modal-content input,
+.modal-content select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+}
+
+.form-actions button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#cancel-button {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancel-button:hover {
+    background-color: #aaa;
+}
+
+form button[type="submit"] {
+    background-color: #28a745;
+    color: #fff;
+}
+
+form button[type="submit"]:hover {
+    background-color: #218838;
+}

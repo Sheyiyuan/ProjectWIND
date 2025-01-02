@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号设置</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航栏 -->
+        <aside class="sidebar">
+            <ul>
+                <li>日志</li>
+                <li><a href="account.html">账号设置</a></li>
+                <li>自定义文字</li>
+                <li>扩展功能</li>
+                <li>综合设置</li>
+                <li>辅助工具</li>
+                <li><a href="index.html">关于</a></li>
+            </ul>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="content">
+            <header>
+                <h1>账号设置</h1>
+            </header>
+            <section class="account-section">
+                <p id="no-account-msg">似乎还没有账号，<a href="#" id="add-link">点我添加一个</a></p>
+            </section>
+            <footer>
+                <button class="add-button" id="add-button">+</button>
+            </footer>
+        </main>
+    </div>
+
+    <!-- 添加账号弹窗 -->
+    <div id="add-account-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>账号登录</h2>
+            <form id="account-form">
+                <label for="account-type">账号类型</label>
+                <select id="account-type" name="account-type">
+                    <option value="qq">QQ(内置客户端)</option>
+                    <option value="weixin">微信</option>
+                    <option value="email">电子邮件</option>
+                </select>
+                <label for="account">账号</label>
+                <input type="text" id="account" name="account" required>
+                <div class="form-actions">
+                    <button type="button" id="cancel-button">取消</button>
+                    <button type="submit">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 打开弹窗
+        function openModal() {
+            document.getElementById('add-account-modal').style.display = 'block';
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('add-account-modal').style.display = 'none';
+        }
+
+        // 添加账号功能
+        document.getElementById('account-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            closeModal();
+            document.getElementById('no-account-msg').style.display = 'none';
+            alert('账号已添加');
+        });
+
+        // 绑定按钮点击事件
+        document.getElementById('add-link').addEventListener('click', openModal);
+        document.getElementById('add-button').addEventListener('click', openModal);
+        document.getElementById('cancel-button').addEventListener('click', closeModal);
+    </script>
+</body>
+</html>

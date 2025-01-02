@@ -1,0 +1,133 @@
+/* 全局样式 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Arial", sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+    height: 100vh;
+    color: #333;
+}
+
+/* 容器布局 */
+.container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+}
+
+/* 左侧导航栏样式 */
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    background-color: #f4f4f4;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 12px 15px;
+    margin: 8px 0;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.sidebar ul li:hover,
+.sidebar ul li.active {
+    background-color: #e8e8e8;
+    color: #000;
+    font-weight: bold;
+}
+
+/* 右侧内容样式 */
+.content {
+    flex: 1;
+    height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+
+/* 标题和版本信息 */
+
+header h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: #444;
+}
+
+.version {
+    text-align: center;
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.subversion {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+/* logo图片 */
+.wind-image {
+    text-align: center; /* 居中logo */
+}
+
+.wind-image img {
+    max-width: 250px; /* 限制宽度 */
+    height: auto;
+    margin: 20px 0;
+}
+
+/* 链接部分 */
+.links span {
+    text-decoration: none; /* 去掉下划线 */
+    color: inherit;
+}
+
+.links p {
+    font-size: 16px;
+    margin: 8px 0;
+    color: #555;
+}
+
+/* 感谢部分 */
+.credits h2 {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+    color: #444;
+}
+
+.credits p {
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+}
+
+/* 页脚 */
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #666;
+}
