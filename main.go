@@ -48,6 +48,11 @@ func main() {
 		startProtocol()
 		return
 	}
+	if cmdArgs[0] == "-d" || cmdArgs[0] == "--database" {
+		// 连接到数据库
+		startDatabase()
+		return
+	}
 	fmt.Println("未知命令，请使用-h查看帮助。")
 	return
 }

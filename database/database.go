@@ -35,6 +35,7 @@ func newDatabase(id string) Database {
 		Id:     id,
 		Users:  make(map[string]User),
 		Groups: make(map[string]Group),
+		Global: make(map[string]Global),
 	}
 	return *db
 }
@@ -43,7 +44,7 @@ func folderCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		err := os.MkdirAll(filename, 0755)
 		if err != nil {
-			LOG.FATAL("[ERROR]Error occurred while create folder: %v", err)
+			LOG.FATAL("[ERROR]Error occured while create folder: %v", err)
 		}
 	}
 }
@@ -55,12 +56,12 @@ func fileCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
 		if err != nil {
-			LOG.FATAL("[ERROR]Error occurred while create file: %v", err)
+			LOG.FATAL("[ERROR]Error occured while create file: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.FATAL("[ERROR]Error occurred while close file: %v", err)
+				LOG.FATAL("[ERROR]Error occured while close file: %v", err)
 			}
 		}(file)
 	}
@@ -91,7 +92,7 @@ func printContent(file string) (string, error) {
 	}
 }
 
-func SaveData(db *Database) error {
+func saveData(db *Database) error {
 	// 保存数据到文件
 	dataJson, err := json.Marshal(db)
 	if err != nil {
@@ -104,10 +105,7 @@ func SaveData(db *Database) error {
 		LOG.ERROR("[ERROR]:Error while create file %s: %v", filename, err)
 		return err
 	}
-	err = writeContent(file, string(dataJson))
-	if err != nil {
-		return err
-	}
+	writeContent(file, string(dataJson))
 	return nil
 }
 
@@ -130,7 +128,9 @@ func loadData(db *Database) error {
 	return nil
 }
 
-func DataGet(db *Database, category string, id string, key string) (string, bool) {
+var DB *Database
+
+func dataGet(db *Database, category string, id string, key string) (string, bool) {
 	// 查询数据
 	switch category {
 	case "user":
@@ -172,12 +172,12 @@ func DataGet(db *Database, category string, id string, key string) (string, bool
 			return "", false
 		}
 		if global.Data == nil {
-			LOG.WARN("[WARNING]:Global %s's data is nil", id)
+			LOG.WARN("[WARNING]:Global data of %s is nil", id)
 			return "", false
 		}
 		value, ok := global.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:Global %s's data %s not found", id, key)
+			LOG.WARN("[WARNING]:Global data of %s's %s not found", id, key)
 			return "", false
 		}
 		return value, true
@@ -187,7 +187,7 @@ func DataGet(db *Database, category string, id string, key string) (string, bool
 	}
 }
 
-func DataSet(db *Database, category string, id string, key string, value string) {
+func dataSet(db *Database, category string, id string, key string, value string) {
 	// 修改数据
 	switch category {
 	case "user":
@@ -234,14 +234,24 @@ func DataSet(db *Database, category string, id string, key string, value string)
 	}
 }
 
-func keepDatabase(db *Database) {
+func initializeDatabase() *Database {
+	// 启动并检查程序
+	LOG.INFO("Starting database ...")
+	db := newDatabase("datamap")
+	loadData(&db)
+	LOG.INFO("Database started successfully.")
+	return &db
+}
+
+func Start() {
+	DB = initializeDatabase()
 	// 创建一个通道用于接收信号
 	dataChan := make(chan os.Signal, 1)
 	// 监听指定的信号，如SIGINT (Ctrl+C) 和 SIGTERM
 	signal.Notify(dataChan, syscall.SIGINT, syscall.SIGTERM)
 
 	// 定义一个Ticker用于每1小时触发一次保存操作
-	saveTicker := time.NewTicker(3600 * time.Second)
+	saveTicker := time.NewTicker(600 * time.Second)
 	defer saveTicker.Stop()
 
 	// 启动一个goroutine等待信号和定时保存
@@ -251,33 +261,25 @@ func keepDatabase(db *Database) {
 			case <-dataChan:
 				// 接收到信号，保存数据并退出程序
 				LOG.INFO("Received signal, saving data and exiting...")
-				err := SaveData(db)
-				if err != nil {
-					return
-				}
+				saveData(DB)
 				os.Exit(0)
 			case <-saveTicker.C:
 				// 定时保存数据
 				LOG.INFO("Saving data automatically...")
-				err := SaveData(db)
-				if err != nil {
-					return
-				}
+				saveData(DB)
 			}
 		}
 	}()
+
 	select {} // 阻塞主goroutine
 }
 
-func Start() *Database {
-	// 启动并检查程序
-	LOG.INFO("Starting database ...")
-	db := newDatabase("datamap")
-	err := loadData(&db)
-	if err != nil {
-		return nil
-	}
-	LOG.INFO("Database started successfully.")
-	keepDatabase(&db)
-	return &db
+func Get(category string, id string, key string) (string, bool) {
+	// 查询数据
+	return dataGet(DB, category, id, key)
+}
+
+func Set(category string, id string, key string, value string) {
+	// 修改数据
+	dataSet(DB, category, id, key, value)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"ProjectWIND/LOG"
 	"ProjectWIND/core"
+	"ProjectWIND/database"
 	"ProjectWIND/typed"
 	"encoding/json"
 	"errors"
@@ -326,4 +327,35 @@ func ReloadApps() {
 	LOG.INFO("正在重新加载应用...")
 	total, success := core.ReloadApps()
 	LOG.INFO("应用重新加载完成，共加载%d个应用，成功加载%d个应用。", total, success)
+}
+
+func startDatabase() {
+	go database.Start()
+	time.Sleep(time.Second * 1)
+	// 读写测试
+	// for i := 0; i < 10; i++ {
+	// 	data, ok := database.Get("user", "test", "test"+fmt.Sprintf("%d", i))
+	// 	if !ok {
+	// 		LOG.ERROR("Failed to get data from database")
+	// 		continue
+	// 	}
+	// 	LOG.INFO("Get data from database: %v", data)
+	// 	time.Sleep(time.Second * 1)
+	// }
+	// time.Sleep(time.Second * 1)
+	// for i := 0; i < 10; i++ {
+	// 	database.Set("user", "test", "test"+fmt.Sprintf("%d", i), "test"+fmt.Sprintf("%d", 1000+i))
+	// 	time.Sleep(time.Second * 1)
+	// }
+	// time.Sleep(time.Second * 1)
+	// for i := 0; i < 10; i++ {
+	// 	data, ok := database.Get("user", "test", "test"+fmt.Sprintf("%d", i))
+	// 	if !ok {
+	// 		LOG.ERROR("Failed to get data from database")
+	// 		continue
+	// 	}
+	// 	LOG.INFO("Get data from database: %v", data)
+	// 	time.Sleep(time.Second * 1)
+	// }
+	select {}
 }
