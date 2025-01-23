@@ -25,8 +25,6 @@ type Database struct {
 	Users  map[string]User
 	Groups map[string]Group
 	Global map[string]Global
-	//...
-	// Others map[string]map[string]unit
 }
 
 func newDatabase(id string) Database {
@@ -99,7 +97,7 @@ func saveData(db *Database) error {
 		LOG.ERROR("[ERROR]:Error while marshal data: %v", err)
 		return err
 	}
-	filename := "./data/database/" + db.Id + ".txt"
+	filename := "./database/" + db.Id + ".wdb"
 	file, err := os.Create(filename)
 	if err != nil {
 		LOG.ERROR("[ERROR]:Error while create file %s: %v", filename, err)
@@ -111,7 +109,7 @@ func saveData(db *Database) error {
 
 func loadData(db *Database) error {
 	// 读取配置文件
-	filename := "./data/database/" + db.Id + ".txt"
+	filename := "./database/" + db.Id + ".wdb"
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
 	if err != nil {
@@ -271,7 +269,7 @@ func Start() {
 		}
 	}()
 
-	select {} // 阻塞主goroutine
+	select {} // 阻塞
 }
 
 func Get(category string, id string, key string) (string, bool) {
