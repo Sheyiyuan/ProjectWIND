@@ -1,7 +1,7 @@
 # ProjectWIND
 像风一样自由
 
-<div style="text-align: center;"><img src="./icon.png" alt="ProjectWIND" width="50%" ></div>
+<div style="text-align: center;"><img src="./logo.png" alt="ProjectWIND" width="50%" ></div>
 
 license: [MIT](./LICENSE)
 
@@ -21,7 +21,7 @@ TODO:
 
 ## WIND 是什么？
 
-WIND（全称：WIND is not dice）是一个基于 Go 语言开发bot框架，旨在以高自由度完成各种功能。
+WIND（全称：WIND is not dice）是一个基于 Go 语言开发的bot框架，旨在以高自由度完成各种功能。
 
 # 项目依赖与致谢
 
