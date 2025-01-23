@@ -1,7 +1,7 @@
 # ProjectWIND
 像风一样自由
 
-<div style="text-align: center;"><img src="./icon.png" alt="ProjectWIND" width="50%" ></div>
+<div style="text-align: center;"><img src="./logo.png" alt="ProjectWIND" width="50%" ></div>
 
 license: [MIT](./LICENSE)
 
@@ -21,7 +21,7 @@ TODO:
 
 ## WIND 是什么？
 
-WIND（全称：WIND is not dice）是一个基于 Go 语言开发bot框架，旨在以高自由度完成各种功能。
+WIND（全称：WIND is not dice）是一个基于 Go 语言开发的bot框架，旨在以高自由度完成各种功能。
 
 # 项目依赖与致谢
 
@@ -34,7 +34,7 @@ WIND（全称：WIND is not dice）是一个基于 Go 语言开发bot框架，�
 
 ## 2. gocron
 - **库名称**：gocron
-- **仓库地址**：[https://github.com/go - co - op/gocron/v2](https://github.com/go - co -· op/gocron/v2)
+- **仓库地址**：[https://github.com/go-co-op/gocron](https://github.com/go-co-op/gocron)
 - **用途说明**：gocron 是一个出色的任务调度库。在本项目里，它被用于[详细的任务调度应用场景，比如定期执行数据同步任务、定时清理临时文件或缓存数据等]，确保了项目中的各种定时任务能够精准、可靠地执行。其简洁易用的 API 设计大大降低了我们实现复杂任务调度逻辑的难度，为项目的稳定运行提供了有力保障。
 
 非常感谢 `goja` 和 `gocron` 项目团队的开源贡献，使得我们的项目开发能够借助这些优秀的工具快速推进，为用户带来更好的体验。
