@@ -43,17 +43,13 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			return 1, 0
 		}
 
-		initSymbol, err := p.Lookup("Application")
+		Application, err := p.Lookup("AppInit")
 		if err != nil {
 			LOG.ERROR("找不到应用 %s 提供的 Application 接口: %v", pluginPath, err)
 			return 1, 0
 		}
 
-		app, ok := initSymbol.(wba.APP)
-		if !ok {
-			LOG.ERROR("应用 %s 提供的 Application 接口不是 wba.APP 类型", pluginPath)
-			return 1, 0
-		}
+		app := Application.(func() wba.AppInfo)()
 
 		err = app.Init(&AppApi)
 		if err != nil {
