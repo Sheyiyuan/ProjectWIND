@@ -1,11 +1,16 @@
+//go:build windows
+// +build windows
+
 package core
 
 import (
 	"ProjectWIND/LOG"
 	"ProjectWIND/wba"
+	"fmt"
 	"os"
 	"path/filepath"
-	"plugin"
+	"syscall"
+	"unsafe"
 )
 
 var CmdMap = make(map[string]wba.Cmd)
@@ -33,23 +38,33 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 	if file.IsDir() {
 		return 0, 0
 	}
-
 	ext := filepath.Ext(file.Name())
-	if ext == ".so" || (ext == ".dll" && os.PathSeparator == '\\') {
+	if ext == ".dll" {
 		pluginPath := filepath.Join(appsDir, file.Name())
-		p, err := plugin.Open(pluginPath)
+		lib, err := syscall.LoadLibrary(pluginPath)
 		if err != nil {
-			LOG.ERROR("打开应用 %s 时发生错误: %v", pluginPath, err)
+			LOG.ERROR("加载应用 %s 失败: %v", pluginPath, err)
+			return 1, 0
+		}
+		defer func(handle syscall.Handle) {
+			err := syscall.FreeLibrary(handle)
+			if err != nil {
+				LOG.ERROR("释放应用 %s 时发生错误: %v", pluginPath, err)
+			}
+		}(lib)
+
+		// 获取函数地址
+		sym, err := syscall.GetProcAddress(lib, "AppInit")
+		if err != nil {
+			fmt.Println("找不到应用 %s 提供的 AppInit 接口: %v", err)
 			return 1, 0
 		}
 
-		Application, err := p.Lookup("AppInit")
-		if err != nil {
-			LOG.ERROR("找不到应用 %s 提供的 Application 接口: %v", pluginPath, err)
-			return 1, 0
-		}
+		// 定义函数类型
+		AppInitPtr := (*func() wba.AppInfo)(unsafe.Pointer(&sym))
+		AppInit := *AppInitPtr
 
-		app := Application.(func() wba.AppInfo)()
+		app := AppInit()
 
 		err = app.Init(&AppApi)
 		if err != nil {
