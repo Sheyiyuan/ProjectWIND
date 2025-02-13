@@ -10,9 +10,12 @@ type APP interface {
 }
 
 type WindAPI interface {
-	SendMsg(msg MessageEventInfo, message string, autoEscape bool)
-	SendPrivateMsg(msg MessageEventInfo, message string, autoEscape bool)
-	SendGroupMsg(msg MessageEventInfo, message string, autoEscape bool)
+	SendMsg(msgType string, groupId int64, userId int64, message string, autoEscape bool)
+	SendPrivateMsg(userId int64, message string, autoEscape bool)
+	SendGroupMsg(groupId int64, message string, autoEscape bool)
+	ReplyMsg(msg MessageEventInfo, message string, autoEscape bool)
+	ReplyPrivateMsg(msg MessageEventInfo, message string, autoEscape bool)
+	ReplyGroupMsg(msg MessageEventInfo, message string, autoEscape bool)
 	DeleteMsg(msg MessageEventInfo)
 	SendLike(userId int64, times int)
 	SetGroupKick(groupId int64, userId int64, rejectAddRequest bool)

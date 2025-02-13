@@ -24,7 +24,76 @@ type apiInfo struct{}
 //1.无响应API,使用ws协议处理
 
 // SendMsg 发送消息(自动判断消息类型)
-func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+func (a *apiInfo) SendMsg(messageType string, groupId int64, userId int64, message string, autoEscape bool) {
+	// 构建发送消息的JSON数据
+	var messageData wba.APIRequestInfo
+	messageData.Action = "send_msg"
+	switch messageType {
+	case "private":
+		{
+			messageData.Params.UserId = userId
+			break
+		}
+	case "group":
+		{
+			messageData.Params.GroupId = groupId
+			break
+		}
+	default:
+		{
+			LOG.ERROR("发送消息(SendMsg)时，消息类型错误: %v", messageType)
+		}
+	}
+	messageData.Params.Message = message
+	messageData.Params.AutoEscape = autoEscape
+	// 发送消息
+	_, err := wsAPI(messageData)
+	if err != nil {
+		LOG.ERROR("发送消息时，发送失败: %v", err)
+		return
+	}
+	LOG.INFO("发送消息(SendMsg)(至：%v-%v:%v):%v", messageType, groupId, userId, message)
+	return
+}
+
+// SendPrivateMsg 发送私聊消息
+func (a *apiInfo) SendPrivateMsg(userId int64, message string, autoEscape bool) {
+	// 构建发送消息的JSON数据
+	var messageData wba.APIRequestInfo
+	messageData.Action = "send_private_msg"
+	messageData.Params.UserId = userId
+	messageData.Params.Message = message
+	messageData.Params.AutoEscape = autoEscape
+	// 发送消息
+	_, err := wsAPI(messageData)
+	if err != nil {
+		LOG.ERROR("发送私聊消息(SendPrivateMsg)时，发送失败: %v", err)
+		return
+	}
+	LOG.INFO("发送私聊消息(SendPrivateMsg)(至：%v):%v", userId, message)
+	return
+}
+
+// SendGroupMsg 发送群消息
+func (a *apiInfo) SendGroupMsg(groupId int64, message string, autoEscape bool) {
+	// 构建发送消息的JSON数据
+	var messageData wba.APIRequestInfo
+	messageData.Action = "send_group_msg"
+	messageData.Params.GroupId = groupId
+	messageData.Params.Message = message
+	messageData.Params.AutoEscape = autoEscape
+	// 发送消息
+	_, err := wsAPI(messageData)
+	if err != nil {
+		LOG.ERROR("发送群消息(SendGroupMsg)时，发送失败: %v", err)
+		return
+	}
+	LOG.INFO("发送群消息(SendGroupMsg)(至：%v):%v", groupId, message)
+	return
+}
+
+// ReplyMsg 回复消息(自动判断消息类型)
+func (a *apiInfo) ReplyMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 
@@ -44,7 +113,7 @@ func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape b
 		}
 	default:
 		{
-			LOG.ERROR("发送消息(SendMsg)时，消息类型错误: %v", messageType)
+			LOG.ERROR("回复消息(ReplyMsg)时，消息类型错误: %v", messageType)
 		}
 	}
 	messageData.Params.Message = message
@@ -52,15 +121,15 @@ func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape b
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送消息时，发送失败: %v", err)
+		LOG.ERROR("回复消息时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送消息(SendMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	LOG.INFO("回复消息(ReplyMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
 	return
 }
 
-// SendPrivateMsg 发送私聊消息
-func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+// ReplyPrivateMsg 回复私聊消息
+func (a *apiInfo) ReplyPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_private_msg"
@@ -70,15 +139,15 @@ func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoE
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送消息(SendPrivateMsg)时，发送失败: %v", err)
+		LOG.ERROR("回复消息(ReplyPrivateMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送消息(SendPrivateMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	LOG.INFO("回复消息(ReplyPrivateMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
 	return
 }
 
-// SendGroupMsg 发送群消息
-func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+// ReplyGroupMsg 回复群消息
+func (a *apiInfo) ReplyGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_group_msg"
@@ -88,10 +157,10 @@ func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEsc
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送消息(SendGroupMsg)时，发送失败: %v", err)
+		LOG.ERROR("回复消息(ReplyGroupMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送消息(SendGroupMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	LOG.INFO("回复消息(ReplyGroupMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
 	return
 }
 

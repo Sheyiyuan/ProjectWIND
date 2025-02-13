@@ -47,7 +47,7 @@ var AppCore = AppInfo{
 			"bot",
 			"显示WIND版本信息",
 			func(args []string, msg wba.MessageEventInfo) {
-				AppApi.SendMsg(msg, "WIND 0.1.0", false)
+				AppApi.ReplyMsg(msg, "WIND 0.1.0", false)
 				LOG.INFO("发送核心版本信息:(至：%v-%v:%v-%v)", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname)
 			},
 		),
