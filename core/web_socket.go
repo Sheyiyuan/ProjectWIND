@@ -21,14 +21,14 @@ func WebSocketHandler(protocolAddr string, token string) error {
 	// 解析连接URL
 	u, err := url.Parse(protocolAddr)
 	if err != nil {
-		LOG.ERROR("Parse URL error: %v", err)
+		LOG.Error("Parse URL error: %v", err)
 		return err
 	}
 
 	// 创建一个带有Authorization头的HTTP请求
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		LOG.FATAL("创建请求出错:%v", err)
+		LOG.Fatal("创建请求出错:%v", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	// 配置WebSocket连接升级器
@@ -36,19 +36,19 @@ func WebSocketHandler(protocolAddr string, token string) error {
 	// 使用升级器建立WebSocket连接
 	conn, _, err := dialer.Dial(req.URL.String(), req.Header)
 	if err != nil {
-		LOG.FATAL("建立WebSocket连接出错:%v", err)
+		LOG.Fatal("建立WebSocket连接出错:%v", err)
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
 		if err != nil {
-			LOG.ERROR("Close error: %v", err)
+			LOG.Error("Close error: %v", err)
 		}
 	}(conn)
-	LOG.INFO("已连接到WebSocket服务器: %v", u.String())
+	LOG.Info("已连接到WebSocket服务器: %v", u.String())
 	ProtocolInfo := AppApi.GetVersionInfo()
-	LOG.INFO("协议端信息: %v-%v", ProtocolInfo.Data.AppName, ProtocolInfo.Data.AppVersion)
+	LOG.Info("协议端信息: %v-%v", ProtocolInfo.Data.AppName, ProtocolInfo.Data.AppVersion)
 	logInfo := AppApi.GetLoginInfo()
-	LOG.INFO("连接到账号: %v（%v）", logInfo.Data.Nickname, logInfo.Data.UserId)
+	LOG.Info("连接到账号: %v（%v）", logInfo.Data.Nickname, logInfo.Data.UserId)
 
 	// 定义通道,缓存消息和消息类型，防止消息处理阻塞
 	messageChan := make(chan []byte, 32)
@@ -57,7 +57,7 @@ func WebSocketHandler(protocolAddr string, token string) error {
 		// 接收消息并放入通道
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			LOG.ERROR("ReadMessage error: %v", err)
+			LOG.Error("ReadMessage error: %v", err)
 			return err
 		}
 		messageChan <- message
@@ -78,14 +78,14 @@ func WebSocketHandler(protocolAddr string, token string) error {
 // processMessage 处理接收到的消息
 func processMessage(messageType int, message []byte) {
 	if messageType != websocket.TextMessage {
-		LOG.ERROR("Invalid message type: %v", messageType)
+		LOG.Error("Invalid message type: %v", messageType)
 		return
 	}
 	//message json解析
 	var messageMap map[string]interface{}
 	err := json.Unmarshal(message, &messageMap)
 	if err != nil {
-		LOG.ERROR("Unmarshal error: %v", err)
+		LOG.Error("Unmarshal error: %v", err)
 		return
 	}
 	// 处理接收到的消息
@@ -128,13 +128,13 @@ func wsAPI(body wba.APIRequestInfo) (Response wba.APIResponseInfo, err error) {
 	// 解析连接URL
 	u, err := url.Parse(gProtocolAddr)
 	if err != nil {
-		LOG.ERROR("Parse URL error: %v", err)
+		LOG.Error("Parse URL error: %v", err)
 		return wba.APIResponseInfo{}, err
 	}
 	// 创建一个带有Authorization头的HTTP请求
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		LOG.FATAL("创建请求出错:%v", err)
+		LOG.Fatal("创建请求出错:%v", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+gToken)
 	// 配置WebSocket连接升级器
@@ -142,12 +142,12 @@ func wsAPI(body wba.APIRequestInfo) (Response wba.APIResponseInfo, err error) {
 	// 使用升级器建立WebSocket连接
 	conn, _, err := dialer.Dial(req.URL.String(), req.Header)
 	if err != nil {
-		LOG.FATAL("建立WebSocket连接出错:%v", err)
+		LOG.Fatal("建立WebSocket连接出错:%v", err)
 	}
 	defer func(conn *websocket.Conn) {
 		err := conn.Close()
 		if err != nil {
-			LOG.ERROR("Close error: %v", err)
+			LOG.Error("Close error: %v", err)
 		}
 	}(conn)
 	err = conn.WriteMessage(websocket.TextMessage, bodyBytes)

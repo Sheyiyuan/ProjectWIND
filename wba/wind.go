@@ -6,50 +6,262 @@ import (
 
 type APP interface {
 	Get() AppInfo
-	Init(api WindAPI) error
+	Init(api WindStandardProtocolAPI) error
 }
 
-type WindAPI interface {
-	SendMsg(msgType string, groupId int64, userId int64, message string, autoEscape bool)
-	SendPrivateMsg(userId int64, message string, autoEscape bool)
-	SendGroupMsg(groupId int64, message string, autoEscape bool)
-	ReplyMsg(msg MessageEventInfo, message string, autoEscape bool)
-	ReplyPrivateMsg(msg MessageEventInfo, message string, autoEscape bool)
-	ReplyGroupMsg(msg MessageEventInfo, message string, autoEscape bool)
+// WindStandardProtocolAPI Wind标准协议API,提供了onebot11标准中的API接口。
+type WindStandardProtocolAPI interface {
+	// UnsafelySendMsg [不安全][需要master权限]按照QQ号或群号发送消息到指定的群组或用户。
+	// 参数:
+	// - msgType: 消息类型，如 "group" 或 "private"。
+	// - groupId: 群组 ID，若为私聊则为 0。
+	// - userId: 用户 ID，若为群聊则为 0。
+	// - message: 要发送的消息内容。
+	// - autoEscape: 消息内容是否作为纯文本发送（即不解析 CQ 码）。
+	UnsafelySendMsg(msgType string, groupId int64, userId int64, message string, autoEscape bool)
+
+	// UnsafelySendPrivateMsg [不安全][需要master权限]按照QQ号发送私聊消息给指定用户。
+	// 参数:
+	// - userId: 用户 ID。
+	// - message: 要发送的消息内容。
+	// - autoEscape: 消息内容是否作为纯文本发送（即不解析 CQ 码）。
+	UnsafelySendPrivateMsg(userId int64, message string, autoEscape bool)
+
+	// UnsafelySendGroupMsg [不安全][需要master权限]按照群号发送群聊消息到指定群组。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - message: 要发送的消息内容。
+	// - autoEscape: 消息内容是否作为纯文本发送（即不解析 CQ 码）。
+	UnsafelySendGroupMsg(groupId int64, message string, autoEscape bool)
+
+	// SendMsg 按照提供的消息事件信息回复指定消息。
+	// 参数:
+	// - msg: 消息事件信息。
+	// - message: 要回复的消息内容。
+	// - autoEscape: 是否自动转义消息内容。
+	SendMsg(msg MessageEventInfo, message string, autoEscape bool)
+
+	// SendPrivateMsg 按照提供的消息事件信息回复私聊消息。
+	// 参数:
+	// - msg: 消息事件信息。
+	// - message: 要回复的消息内容。
+	// - autoEscape: 消息内容是否作为纯文本发送（即不解析 CQ 码）。
+	SendPrivateMsg(msg MessageEventInfo, message string, autoEscape bool)
+
+	// SendGroupMsg 按照提供的消息事件信息回复群聊消息。
+	// 参数:
+	// - msg: 消息事件信息。
+	// - message: 要回复的消息内容。
+	// - autoEscape: 消息内容是否作为纯文本发送（即不解析 CQ 码）。
+	SendGroupMsg(msg MessageEventInfo, message string, autoEscape bool)
+
+	// UnsafelyDeleteMsg [不安全][需要master权限]撤回指定消息。
+	// 参数:
+	// - msgId: 消息 ID。
+	UnsafelyDeleteMsg(msgId int32)
+
+	// DeleteMsg 按照提供的消息事件信息撤回指定的消息。
+	// 参数:
+	// - msg: 消息事件信息。
 	DeleteMsg(msg MessageEventInfo)
+
+	// SendLike 给指定用户发送点赞，支持指定点赞次数。
+	// 参数:
+	// - userId: 用户 ID。
+	// - times: 赞的次数，每个好友每天最多 10 次。
 	SendLike(userId int64, times int)
+
+	// SetGroupKick 将指定用户踢出指定群组，支持拒绝该用户再次加入。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - userId: 用户 ID。
+	// - rejectAddRequest: 是否拒绝该用户再次加入。
 	SetGroupKick(groupId int64, userId int64, rejectAddRequest bool)
+
+	// SetGroupBan 禁言指定用户在指定群组的发言，支持指定禁言时长。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - userId: 用户 ID。
+	// - duration: 禁言时长，单位为秒，0 表示取消禁言。
 	SetGroupBan(groupId int64, userId int64, duration int32)
+
+	// SetGroupWholeBan 开启或关闭指定群组的全员禁言。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - enable: 是否开启全员禁言。
 	SetGroupWholeBan(groupId int64, enable bool)
+
+	// SetGroupAdmin 设置或取消指定用户在指定群组的管理员权限。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - userId: 用户 ID。
+	// - enable: 是否设置为管理员。
 	SetGroupAdmin(groupId int64, userId int64, enable bool)
+
+	// SetGroupLeave 退出指定群组。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - isDismiss: 是否解散，如果登录号是群主，则仅在此项为 true 时能够解散。
 	SetGroupLeave(groupId int64, isDismiss bool)
+
+	// SetGroupCard 设置指定用户在指定群组的群名片。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - userId: 用户 ID。
+	// - card: 群名片内容。
 	SetGroupCard(groupId int64, userId int64, card string)
+
+	// SetGroupName 设置指定群组的名称。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - groupName: 群组名称。
 	SetGroupName(groupId int64, groupName string)
-	SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string, duration int32)
+
+	// SetGroupSpecialTitle 设置指定用户在指定群组的专属头衔，支持指定头衔有效期。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - userId: 用户 ID。
+	// - specialTitle: 专属头衔内容。
+	SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string)
+
+	// SetFriendAddRequest 处理好友添加请求，支持同意或拒绝并添加备注。
+	// 参数:
+	// - flag: 请求标识(需从上报的数据中获得)。
+	// - approve: 是否同意请求。
+	// - remark: 备注信息（仅在同意时有效）。
 	SetFriendAddRequest(flag string, approve bool, remark string)
+
+	// SetGroupAddRequest 处理群组添加请求，支持同意或拒绝并添加理由。
+	// 参数:
+	// - flag: 请求标识。
+	// - subType: 请求子类型。
+	// - approve: 是否同意请求。
+	// - reason: 拒绝理由。
 	SetGroupAddRequest(flag string, subType string, approve bool, reason string)
+
+	// GetLoginInfo 获取当前登录的账号信息。
+	// 返回: API 响应信息。
 	GetLoginInfo() APIResponseInfo
+
+	// GetVersionInfo 获取当前程序的版本信息。
+	// 返回: API 响应信息。
 	GetVersionInfo() APIResponseInfo
+
+	// GetMsg 获取指定消息 ID 的消息内容。
+	// 参数:
+	// - msgId: 消息 ID。
+	// 返回: API 响应信息。
 	GetMsg(msgId int32) APIResponseInfo
+
+	// GetForwardMsg 获取指定转发消息 ID 的消息内容。
+	// 参数:
+	// - msgId: 转发消息 ID。
+	// 返回: API 响应信息。
 	GetForwardMsg(msgId string) APIResponseInfo
+
+	// GetGroupList 获取当前登录账号加入的所有群组列表。
+	// 返回: API 响应信息。
 	GetGroupList() APIResponseInfo
+
+	// GetGroupMemberList 获取指定群组的所有成员列表。
+	// 参数:
+	// - groupId: 群组 ID。
+	// 返回: API 响应信息。
 	GetGroupMemberList(groupId int64) APIResponseInfo
+
+	// GetGroupMemberInfo 获取指定群组中指定用户的详细信息，支持缓存控制。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - userId: 用户 ID。
+	// - noCache: 是否不使用缓存。
+	// 返回: API 响应信息。
 	GetGroupMemberInfo(groupId int64, userId int64, noCache bool) APIResponseInfo
+
+	// GetFriendList 获取当前登录账号的所有好友列表。
+	// 返回: API 响应信息。
 	GetFriendList() APIResponseInfo
+
+	// GetStrangerInfo 获取指定用户的详细信息，支持缓存控制。
+	// 参数:
+	// - userId: 用户 ID。
+	// - noCache: 是否不使用缓存。
+	// 返回: API 响应信息。
 	GetStrangerInfo(userId int64, noCache bool) APIResponseInfo
+
+	// GetGroupInfo 获取指定群组的详细信息，支持缓存控制。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - noCache: 是否不使用缓存。
+	// 返回: API 响应信息。
 	GetGroupInfo(groupId int64, noCache bool) APIResponseInfo
+
+	// GetGroupHonorInfo 获取指定群组的荣誉信息。
+	// 参数:
+	// - groupId: 群组 ID。
+	// - Type: 荣誉类型。
+	// 返回: API 响应信息。
 	GetGroupHonorInfo(groupId int64, Type string) APIResponseInfo
+
+	// GetStatus 获取当前程序的运行状态信息。
+	// 返回: API 响应信息。
 	GetStatus() APIResponseInfo
+
+	//	// GetCookies 获取指定域名的 Cookies 信息。
+	// 参数:
+	// - domain: 域名。
+	// 返回: API 响应信息。
 	GetCookies(domain string) APIResponseInfo
+
+	// GetCSRFToken 获取 CSRF 令牌。
+	// 返回: API 响应信息。
 	GetCSRFToken() APIResponseInfo
+
+	// GetCredentials 获取指定域名的凭证信息。
+	// 参数:
+	// - domain: 域名。
+	// 返回: API 响应信息。
 	GetCredentials(domain string) APIResponseInfo
+
+	// GetImage 获取指定文件的图片信息。
+	// 参数:
+	// - file: 文件路径或标识符。
+	// 返回: API 响应信息。
 	GetImage(file string) APIResponseInfo
+
+	// GetRecord 获取指定文件的语音记录信息，支持指定输出格式。
+	// 参数:
+	// - file: 文件路径或标识符。
+	// - outFormat: 输出格式。
+	// 返回: API 响应信息。
 	GetRecord(file string, outFormat string) APIResponseInfo
+
+	// CanSendImage 检查是否可以发送图片。
+	// 返回: API 响应信息。
 	CanSendImage() APIResponseInfo
+
+	// CanSendRecord 检查是否可以发送语音记录。
+	// 返回: API 响应信息。
 	CanSendRecord() APIResponseInfo
+
+	// SetRestart 设置程序在指定延迟后重启。
+	// 参数:
+	// - delay: 延迟时间，单位为秒。
 	SetRestart(delay int32)
+
+	// CleanCache 清理程序的缓存。
 	CleanCache()
+
+	// LogWith 使用指定日志级别记录日志，支持可变参数占位符。
+	// 参数:
+	// - level: 日志级别: "trace", "debug", "info", "notice", "warn", "error"。
+	// - log: 日志内容。
+	// - args: 可变参数，用于格式化日志内容。
 	LogWith(level string, log string, args ...interface{})
+
+	// Log 记录日志，级别为 "info"，支持可变参数占位符。
+	// 参数:
+	// - log: 日志内容。
+	// - args: 可变参数，用于格式化日志内容。
 	Log(log string, args ...interface{})
 }
 
@@ -76,8 +288,8 @@ func (ai AppInfo) Get() AppInfo {
 	return ai
 }
 
-func (ai *AppInfo) Init(api WindAPI) error {
-	Wind = api
+func (ai *AppInfo) Init(api WindStandardProtocolAPI) error {
+	WSP = api
 	return nil
 }
 
@@ -147,9 +359,9 @@ func WithRule(rule string) AppInfoOption {
 
 func NewApp(opts ...AppInfoOption) AppInfo {
 	Ext := AppInfo{
-		Name:        "Wind",
+		Name:        "WSP",
 		Version:     "v1.0.0",
-		Author:      "Wind",
+		Author:      "WSP",
 		Description: "A simple and easy-to-use bot framework",
 		Namespace:   "PUBLIC",
 		Homepage:    "https://github.com/Sheyiyuan/wind_app_model",
@@ -425,4 +637,4 @@ type ScheduledTaskInfo struct {
 	Cron string `json:"cron,omitempty"`
 }
 
-var Wind WindAPI
+var WSP WindStandardProtocolAPI

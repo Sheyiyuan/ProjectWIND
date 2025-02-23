@@ -11,8 +11,8 @@ func RegisterCron(task wba.ScheduledTaskInfo) {
 	c := cron.New(cron.WithSeconds())
 	_, err := c.AddFunc(task.Cron, task.Task)
 	if err != nil {
-		LOG.ERROR("添加定时任务 %s 时出错%v:", task.Name, err)
+		LOG.Error("添加定时任务 %s 时出错%v:", task.Name, err)
 	}
 	c.Start()
-	LOG.INFO("定时任务 %s 注册成功", task.Name)
+	LOG.Info("定时任务 %s 注册成功", task.Name)
 }

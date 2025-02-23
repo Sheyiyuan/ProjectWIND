@@ -25,7 +25,7 @@ func (app *AppInfo) Run(cmd string, args []string, msg wba.MessageEventInfo) err
 	return nil
 }
 
-func (app *AppInfo) Init(Api wba.WindAPI) error {
+func (app *AppInfo) Init(Api wba.WindStandardProtocolAPI) error {
 	return nil
 }
 
@@ -47,8 +47,8 @@ var AppCore = AppInfo{
 			"bot",
 			"显示WIND版本信息",
 			func(args []string, msg wba.MessageEventInfo) {
-				AppApi.ReplyMsg(msg, "WIND 0.1.0", false)
-				LOG.INFO("发送核心版本信息:(至：%v-%v:%v-%v)", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname)
+				AppApi.SendMsg(msg, "WIND 0.1.0", false)
+				LOG.Info("发送核心版本信息:(至：%v-%v:%v-%v)", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname)
 			},
 		),
 	},

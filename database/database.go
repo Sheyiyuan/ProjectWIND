@@ -42,7 +42,7 @@ func folderCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		err := os.MkdirAll(filename, 0755)
 		if err != nil {
-			LOG.FATAL("[ERROR]Error occured while create folder: %v", err)
+			LOG.Fatal("[Error]Error occured while create folder: %v", err)
 		}
 	}
 }
@@ -54,12 +54,12 @@ func fileCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
 		if err != nil {
-			LOG.FATAL("[ERROR]Error occured while create file: %v", err)
+			LOG.Fatal("[Error]Error occured while create file: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.FATAL("[ERROR]Error occured while close file: %v", err)
+				LOG.Fatal("[Error]Error occured while close file: %v", err)
 			}
 		}(file)
 	}
@@ -68,13 +68,13 @@ func fileCheck(filename string) {
 func writeContent(f *os.File, str string) error {
 	// 写入内容到文件
 	if f == nil {
-		// log.Printf("[ERROR]file is nil")
-		LOG.ERROR("[ERROR]file is nil")
+		// log.Printf("[Error]file is nil")
+		LOG.Error("[Error]file is nil")
 		return errors.New("file is nil")
 	}
 	_, err := f.Write([]byte(str))
 	if err != nil {
-		LOG.ERROR("[ERROR]Error while write content to file: %v", err)
+		LOG.Error("[Error]Error while write content to file: %v", err)
 		return err
 	}
 	return nil
@@ -94,13 +94,13 @@ func saveData(db *Database) error {
 	// 保存数据到文件
 	dataJson, err := json.Marshal(db)
 	if err != nil {
-		LOG.ERROR("[ERROR]:Error while marshal data: %v", err)
+		LOG.Error("[Error]:Error while marshal data: %v", err)
 		return err
 	}
 	filename := "./database/" + db.Id + ".wdb"
 	file, err := os.Create(filename)
 	if err != nil {
-		LOG.ERROR("[ERROR]:Error while create file %s: %v", filename, err)
+		LOG.Error("[Error]:Error while create file %s: %v", filename, err)
 		return err
 	}
 	writeContent(file, string(dataJson))
@@ -113,14 +113,14 @@ func loadData(db *Database) error {
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
 	if err != nil {
-		// log.Printf("[ERROR]:Error while read file %s: %v", filename, err)
-		LOG.ERROR("[ERROR]:Error while read file %s: %v", filename, err)
+		// log.Printf("[Error]:Error while read file %s: %v", filename, err)
+		LOG.Error("[Error]:Error while read file %s: %v", filename, err)
 		return err
 	}
 	err = json.Unmarshal([]byte(dataJson), db)
 	if err != nil {
-		// log.Printf("[ERROR]:Error while unmarshal data: %v", err)
-		LOG.WARN("[WARNING]:Error while unmarshal data: %v", err)
+		// log.Printf("[Error]:Error while unmarshal data: %v", err)
+		LOG.Warn("[WARNING]:Error while unmarshal data: %v", err)
 		return err
 	}
 	return nil
@@ -134,53 +134,53 @@ func dataGet(db *Database, category string, id string, key string) (string, bool
 	case "user":
 		user, ok := db.Users[id]
 		if !ok {
-			LOG.WARN("[WARNING]:User %s not found", id)
+			LOG.Warn("[WARNING]:User %s not found", id)
 			return "", false
 		}
 		if user.Data == nil {
-			LOG.WARN("[WARNING]:User %s's data is nil", id)
+			LOG.Warn("[WARNING]:User %s's data is nil", id)
 			return "", false
 		}
 		value, ok := user.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:User %s's data %s not found", id, key)
+			LOG.Warn("[WARNING]:User %s's data %s not found", id, key)
 			return "", false
 		}
 		return value, true
 	case "group":
 		group, ok := db.Groups[id]
 		if !ok {
-			LOG.WARN("[WARNING]:Group %s not found", id)
+			LOG.Warn("[WARNING]:Group %s not found", id)
 			return "", false
 		}
 		if group.Data == nil {
-			LOG.WARN("[WARNING]:Group %s's data is nil", id)
+			LOG.Warn("[WARNING]:Group %s's data is nil", id)
 			return "", false
 		}
 		value, ok := group.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:Group %s's data %s not found", id, key)
+			LOG.Warn("[WARNING]:Group %s's data %s not found", id, key)
 			return "", false
 		}
 		return value, true
 	case "global":
 		global, ok := db.Global[id]
 		if !ok {
-			LOG.WARN("[WARNING]:Global %s not found", id)
+			LOG.Warn("[WARNING]:Global %s not found", id)
 			return "", false
 		}
 		if global.Data == nil {
-			LOG.WARN("[WARNING]:Global data of %s is nil", id)
+			LOG.Warn("[WARNING]:Global data of %s is nil", id)
 			return "", false
 		}
 		value, ok := global.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:Global data of %s's %s not found", id, key)
+			LOG.Warn("[WARNING]:Global data of %s's %s not found", id, key)
 			return "", false
 		}
 		return value, true
 	default:
-		LOG.ERROR("[ERROR]:Invalid category %s", category)
+		LOG.Error("[Error]:Invalid category %s", category)
 		return "", false
 	}
 }
@@ -228,16 +228,16 @@ func dataSet(db *Database, category string, id string, key string, value string)
 		}
 		global.Data[key] = value
 	default:
-		LOG.ERROR("[ERROR]:Invalid category %s", category)
+		LOG.Error("[Error]:Invalid category %s", category)
 	}
 }
 
 func initializeDatabase() *Database {
 	// 启动并检查程序
-	LOG.INFO("Starting database ...")
+	LOG.Info("正在启动数据库 ...")
 	db := newDatabase("datamap")
 	loadData(&db)
-	LOG.INFO("Database started successfully.")
+	LOG.Info("数据库启动成功")
 	return &db
 }
 
@@ -258,13 +258,21 @@ func Start() {
 			select {
 			case <-dataChan:
 				// 接收到信号，保存数据并退出程序
-				LOG.INFO("Received signal, saving data and exiting...")
-				saveData(DB)
+				LOG.Info("即将退出程序，正在保存数据...")
+				err := saveData(DB)
+				if err != nil {
+					LOG.Error("退出程序时保存数据出错: %v", err)
+					return
+				}
 				os.Exit(0)
 			case <-saveTicker.C:
 				// 定时保存数据
-				LOG.INFO("Saving data automatically...")
-				saveData(DB)
+				LOG.Info("自动保存")
+				err := saveData(DB)
+				if err != nil {
+					LOG.Error("自动保存出错: %v", err)
+					return
+				}
 			}
 		}
 	}()
