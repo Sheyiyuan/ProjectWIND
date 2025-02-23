@@ -53,6 +53,16 @@ type WindAPI interface {
 	Log(log string, args ...interface{})
 }
 
+type Database interface {
+	VarSet(app AppInfo, datamap string, unit string, id string, key string, value string)
+	VarGet(app AppInfo, datamap string, unit string, id string, key string) (string, bool)
+	GetIntConfig(app AppInfo, datamap string, key string) (int64, bool)
+	GetStringConfig(app AppInfo, datamap string, key string) (string, bool)
+	GetFloatConfig(app AppInfo, datamap string, key string) (float64, bool)
+	GetIntSliceConfig(app AppInfo, datamap string, key string) ([]int64, bool)
+	GetStringSliceConfig(app AppInfo, datamap string, key string) ([]string, bool)
+}
+
 type AppInfo struct {
 	Name                string
 	Version             string
