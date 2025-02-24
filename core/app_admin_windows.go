@@ -21,7 +21,7 @@ func ReloadApps() (total int, success int) {
 	total = 0
 	success = 0
 	if err != nil {
-		LOG.ERROR("加载应用所在目录失败:%v", err)
+		LOG.Error("加载应用所在目录失败:%v", err)
 		return
 	}
 
@@ -43,13 +43,13 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		pluginPath := filepath.Join(appsDir, file.Name())
 		lib, err := syscall.LoadLibrary(pluginPath)
 		if err != nil {
-			LOG.ERROR("加载应用 %s 失败: %v", pluginPath, err)
+			LOG.Error("加载应用 %s 失败: %v", pluginPath, err)
 			return 1, 0
 		}
 		defer func(handle syscall.Handle) {
 			err := syscall.FreeLibrary(handle)
 			if err != nil {
-				LOG.ERROR("释放应用 %s 时发生错误: %v", pluginPath, err)
+				LOG.Error("释放应用 %s 时发生错误: %v", pluginPath, err)
 			}
 		}(lib)
 
@@ -68,11 +68,11 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 
 		err = app.Init(&AppApi)
 		if err != nil {
-			LOG.ERROR("初始化应用 %s 失败: %v", pluginPath, err)
+			LOG.Error("初始化应用 %s 失败: %v", pluginPath, err)
 		}
 
 		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
-		LOG.INFO("应用 %s 加载成功", pluginPath)
+		LOG.Info("应用 %s 加载成功", pluginPath)
 		return 1, 1
 
 	}

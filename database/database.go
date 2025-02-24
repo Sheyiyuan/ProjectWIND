@@ -429,7 +429,7 @@ func dataGet(datamap string, unit string, id string, key string, allowed bool) (
 		}
 		return value, true
 	default:
-		LOG.ERROR("[ERROR]:Invalid unit %s", unit)
+		LOG.ERROR("[ERROR]:Invalid category %s", category)
 		return "", false
 	}
 }

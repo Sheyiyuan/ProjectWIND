@@ -12,8 +12,14 @@ func main() {
 	//如果没有参数，则启动WebUI
 	if len(os.Args) <= 1 {
 		initCore()
-		fmt.Println("请修改配置文件后，使用-p参数连接协议端开始运行。")
-		return
+		// 启动WebUI
+		h := core.WebServer("8080")
+		go h.Spin()
+		// 连接到数据库
+		go startDatabase()
+		// 连接到协议端
+		go startProtocol()
+		select {}
 	}
 	cmdArgs := os.Args[1:]
 	if cmdArgs[0] == "-h" || cmdArgs[0] == "--help" {
@@ -40,17 +46,6 @@ func main() {
 	if cmdArgs[0] == "-s" || cmdArgs[0] == "--service" {
 		// 注册Linux服务并启动
 		registerService()
-		return
-	}
-	if cmdArgs[0] == "-p" || cmdArgs[0] == "--protocol" {
-		// 连接到协议端
-		go AutoSave()
-		startProtocol()
-		return
-	}
-	if cmdArgs[0] == "-d" || cmdArgs[0] == "--database" {
-		// 连接到数据库
-		startDatabase()
 		return
 	}
 	fmt.Println("未知命令，请使用-h查看帮助。")

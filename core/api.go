@@ -6,6 +6,7 @@ import (
 	"ProjectWIND/wba"
 	"crypto/rand"
 	"fmt"
+	"strings"
 )
 
 type apiInfo struct{}
@@ -24,8 +25,8 @@ type apiInfo struct{}
 
 //1.无响应API,使用ws协议处理
 
-// SendMsg 发送消息(自动判断消息类型)
-func (a *apiInfo) SendMsg(messageType string, groupId int64, userId int64, message string, autoEscape bool) {
+// UnsafelySendMsg 发送消息(自动判断消息类型)
+func (a *apiInfo) UnsafelySendMsg(messageType string, groupId int64, userId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_msg"
@@ -42,7 +43,7 @@ func (a *apiInfo) SendMsg(messageType string, groupId int64, userId int64, messa
 		}
 	default:
 		{
-			LOG.ERROR("发送消息(SendMsg)时，消息类型错误: %v", messageType)
+			LOG.Error("发送消息(UnsafelySendMsg)时，消息类型错误: %v", messageType)
 		}
 	}
 	messageData.Params.Message = message
@@ -50,15 +51,15 @@ func (a *apiInfo) SendMsg(messageType string, groupId int64, userId int64, messa
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送消息时，发送失败: %v", err)
+		LOG.Error("发送消息时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送消息(SendMsg)(至：%v-%v:%v):%v", messageType, groupId, userId, message)
+	LOG.Info("发送消息(UnsafelySendMsg)(至：%v-%v:%v):%v", messageType, groupId, userId, message)
 	return
 }
 
-// SendPrivateMsg 发送私聊消息
-func (a *apiInfo) SendPrivateMsg(userId int64, message string, autoEscape bool) {
+// UnsafelySendPrivateMsg 发送私聊消息
+func (a *apiInfo) UnsafelySendPrivateMsg(userId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_private_msg"
@@ -68,15 +69,15 @@ func (a *apiInfo) SendPrivateMsg(userId int64, message string, autoEscape bool) 
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送私聊消息(SendPrivateMsg)时，发送失败: %v", err)
+		LOG.Error("发送私聊消息(UnsafelySendPrivateMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送私聊消息(SendPrivateMsg)(至：%v):%v", userId, message)
+	LOG.Info("发送私聊消息(UnsafelySendPrivateMsg)(至：%v):%v", userId, message)
 	return
 }
 
-// SendGroupMsg 发送群消息
-func (a *apiInfo) SendGroupMsg(groupId int64, message string, autoEscape bool) {
+// UnsafelySendGroupMsg 发送群消息
+func (a *apiInfo) UnsafelySendGroupMsg(groupId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_group_msg"
@@ -86,15 +87,15 @@ func (a *apiInfo) SendGroupMsg(groupId int64, message string, autoEscape bool) {
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送群消息(SendGroupMsg)时，发送失败: %v", err)
+		LOG.Error("发送群消息(UnsafelySendGroupMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送群消息(SendGroupMsg)(至：%v):%v", groupId, message)
+	LOG.Info("发送群消息(UnsafelySendGroupMsg)(至：%v):%v", groupId, message)
 	return
 }
 
-// ReplyMsg 回复消息(自动判断消息类型)
-func (a *apiInfo) ReplyMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+// SendMsg 回复消息(自动判断消息类型)
+func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 
@@ -114,7 +115,7 @@ func (a *apiInfo) ReplyMsg(msg wba.MessageEventInfo, message string, autoEscape 
 		}
 	default:
 		{
-			LOG.ERROR("回复消息(ReplyMsg)时，消息类型错误: %v", messageType)
+			LOG.Error("回复消息(SendMsg)时，消息类型错误: %v", messageType)
 		}
 	}
 	messageData.Params.Message = message
@@ -122,15 +123,15 @@ func (a *apiInfo) ReplyMsg(msg wba.MessageEventInfo, message string, autoEscape 
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("回复消息时，发送失败: %v", err)
+		LOG.Error("回复消息时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("回复消息(ReplyMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	LOG.Info("回复消息(SendMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
 	return
 }
 
-// ReplyPrivateMsg 回复私聊消息
-func (a *apiInfo) ReplyPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+// SendPrivateMsg 回复私聊消息
+func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_private_msg"
@@ -140,15 +141,15 @@ func (a *apiInfo) ReplyPrivateMsg(msg wba.MessageEventInfo, message string, auto
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("回复消息(ReplyPrivateMsg)时，发送失败: %v", err)
+		LOG.Error("回复消息(SendPrivateMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("回复消息(ReplyPrivateMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	LOG.Info("回复消息(SendPrivateMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
 	return
 }
 
-// ReplyGroupMsg 回复群消息
-func (a *apiInfo) ReplyGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+// SendGroupMsg 回复群消息
+func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_group_msg"
@@ -158,10 +159,25 @@ func (a *apiInfo) ReplyGroupMsg(msg wba.MessageEventInfo, message string, autoEs
 	// 发送消息
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("回复消息(ReplyGroupMsg)时，发送失败: %v", err)
+		LOG.Error("回复消息(SendGroupMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("回复消息(ReplyGroupMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	LOG.Info("回复消息(SendGroupMsg)(至：%v-%v:%v-%v):%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, message)
+	return
+}
+
+// UnsafelyDeleteMsg 撤回消息
+func (a *apiInfo) UnsafelyDeleteMsg(messageId int32) {
+	// 构建删除消息的JSON数据
+	var messageData wba.APIRequestInfo
+	messageData.Action = "delete_msg"
+	messageData.Params.MessageId = messageId
+	_, err := wsAPI(messageData)
+	if err != nil {
+		LOG.Error("撤回消息(UnsafeDeleteMsg)时，发送失败: %v", err)
+		return
+	}
+	LOG.Info("撤回消息(UnsafeDeleteMsg):[id:%v]", messageId)
 	return
 }
 
@@ -173,10 +189,10 @@ func (a *apiInfo) DeleteMsg(msg wba.MessageEventInfo) {
 	messageData.Params.MessageId = msg.MessageId
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("撤回消息(DeleteMsg)时，发送失败: %v", err)
+		LOG.Error("撤回消息(DeleteMsg)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("撤回消息(DeleteMsg):[id:%v]%v", msg.MessageId, msg.RawMessage)
+	LOG.Info("撤回消息(DeleteMsg):[id:%v]%v", msg.MessageId, msg.RawMessage)
 	return
 }
 
@@ -189,10 +205,10 @@ func (a *apiInfo) SendLike(userId int64, times int) {
 	messageData.Params.Times = times
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("发送赞(SendLike)时，发送失败: %v", err)
+		LOG.Error("发送赞(SendLike)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("发送赞(SendLike)(至：%v):%v", userId, times)
+	LOG.Info("发送赞(SendLike)(至：%v):%v", userId, times)
 	return
 }
 
@@ -205,10 +221,10 @@ func (a *apiInfo) SetGroupKick(groupId int64, userId int64, rejectAddRequest boo
 	messageData.Params.RejectAddRequest = rejectAddRequest
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("移出群聊(SetGroupKick)时，发送失败: %v", err)
+		LOG.Error("移出群聊(SetGroupKick)时，发送失败: %v", err)
 		return
 	}
-	LOG.INFO("移出群聊(SetGroupKick)(从：%v-%v):%v", groupId, userId, rejectAddRequest)
+	LOG.Info("移出群聊(SetGroupKick)(从：%v-%v):%v", groupId, userId, rejectAddRequest)
 	return
 }
 
@@ -221,10 +237,10 @@ func (a *apiInfo) SetGroupBan(groupId int64, userId int64, duration int32) {
 	messageData.Params.Duration = duration
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("禁言群成员(SetGroupBan)时，执行失败: %v", err)
+		LOG.Error("禁言群成员(SetGroupBan)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("禁言群成员(SetGroupBan)(在：%v-%v):%v", groupId, userId, duration)
+	LOG.Info("禁言群成员(SetGroupBan)(在：%v-%v):%v", groupId, userId, duration)
 	return
 }
 
@@ -236,10 +252,10 @@ func (a *apiInfo) SetGroupWholeBan(groupId int64, enable bool) {
 	messageData.Params.Enable = enable
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("设置全员禁言(SetGroupWholeBan)时，执行失败: %v", err)
+		LOG.Error("设置全员禁言(SetGroupWholeBan)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("设置全员禁言(SetGroupWholeBan)(在：%v):%v", groupId, enable)
+	LOG.Info("设置全员禁言(SetGroupWholeBan)(在：%v):%v", groupId, enable)
 	return
 }
 
@@ -252,10 +268,10 @@ func (a *apiInfo) SetGroupAdmin(groupId int64, userId int64, enable bool) {
 	messageData.Params.Enable = enable
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("设置群管理员(SetGroupAdmin)时，执行失败: %v", err)
+		LOG.Error("设置群管理员(SetGroupAdmin)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("设置群管理员(SetGroupAdmin)(在：%v-%v):%v", groupId, userId, enable)
+	LOG.Info("设置群管理员(SetGroupAdmin)(在：%v-%v):%v", groupId, userId, enable)
 	return
 }
 
@@ -268,10 +284,10 @@ func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
 	messageData.Params.Card = card
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("设置群名片(SetGroupCard)时，执行失败: %v", err)
+		LOG.Error("设置群名片(SetGroupCard)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("设置群名片(SetGroupCard)(在：%v-%v):%v", groupId, userId, card)
+	LOG.Info("设置群名片(SetGroupCard)(在：%v-%v):%v", groupId, userId, card)
 	return
 }
 
@@ -283,10 +299,10 @@ func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
 	messageData.Params.GroupName = groupName
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("设置群名称(SetGroupName)时，执行失败: %v", err)
+		LOG.Error("设置群名称(SetGroupName)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("设置群名称(SetGroupName)(在：%v):%v", groupId, groupName)
+	LOG.Info("设置群名称(SetGroupName)(在：%v):%v", groupId, groupName)
 	return
 }
 
@@ -298,27 +314,27 @@ func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
 	messageData.Params.IsDismiss = isDismiss
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("退出群聊(SetGroupLeave)时，执行失败: %v", err)
+		LOG.Error("退出群聊(SetGroupLeave)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("退出群聊(SetGroupLeave)(在：%v):%v", groupId, isDismiss)
+	LOG.Info("退出群聊(SetGroupLeave)(在：%v):%v", groupId, isDismiss)
 	return
 }
 
 // SetGroupSpecialTitle 设置群专属头衔(需要群主权限)
-func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string, duration int32) {
+func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_special_title"
 	messageData.Params.GroupId = groupId
 	messageData.Params.UserId = userId
 	messageData.Params.SpecialTitle = specialTitle
-	messageData.Params.Duration = duration
+	messageData.Params.Duration = -1
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("设置群特殊头衔(SetGroupSpecialTitle)时，执行失败: %v", err)
+		LOG.Error("设置群特殊头衔(SetGroupSpecialTitle)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("设置群特殊头衔(SetGroupSpecialTitle)(在：%v-%v):%v-%v", groupId, userId, specialTitle, duration)
+	LOG.Info("设置群特殊头衔(SetGroupSpecialTitle)(在：%v-%v):%v-%v", groupId, userId, specialTitle)
 	return
 }
 
@@ -331,10 +347,10 @@ func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) 
 	messageData.Params.Remark = remark
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("处理加好友请求(SetFriendAddRequest)时，执行失败: %v", err)
+		LOG.Error("处理加好友请求(SetFriendAddRequest)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("处理加好友请求(SetFriendAddRequest)(在：%v):%v-%v-%v", flag, approve, remark)
+	LOG.Info("处理加好友请求(SetFriendAddRequest)(在：%v):%v-%v-%v", flag, approve, remark)
 	return
 }
 
@@ -348,10 +364,10 @@ func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, 
 	messageData.Params.Reason = reason
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("处理加群请求/邀请(SetGroupAddRequest)时，执行失败: %v", err)
+		LOG.Error("处理加群请求/邀请(SetGroupAddRequest)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("处理加群请求/邀请(SetGroupAddRequest)(在：%v-%v-%v):%v", flag, subType, approve, reason)
+	LOG.Info("处理加群请求/邀请(SetGroupAddRequest)(在：%v-%v-%v):%v", flag, subType, approve, reason)
 	return
 }
 
@@ -362,10 +378,10 @@ func (a *apiInfo) SetRestart(delay int32) {
 	messageData.Params.Delay = delay
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("设置重启(SetRestart)时，执行失败: %v", err)
+		LOG.Error("设置重启(SetRestart)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("设置重启(SetRestart):%v", delay)
+	LOG.Info("设置重启(SetRestart):%v", delay)
 	return
 }
 
@@ -375,10 +391,10 @@ func (a *apiInfo) CleanCache() {
 	messageData.Action = "clean_cache"
 	_, err := wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("清理缓存(CleanCache)时，执行失败: %v", err)
+		LOG.Error("清理缓存(CleanCache)时，执行失败: %v", err)
 		return
 	}
-	LOG.INFO("清理缓存(CleanCache)")
+	LOG.Info("清理缓存(CleanCache)")
 	return
 }
 
@@ -386,18 +402,18 @@ func (a *apiInfo) CleanCache() {
 
 // GetLoginInfo 获取登录信息
 func (a *apiInfo) GetLoginInfo() (Response wba.APIResponseInfo) {
-	LOG.INFO("获取登录信息(GetLoginInfo)")
+	LOG.Info("获取登录信息(GetLoginInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_login_info"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取登录信息(GetLoginInfo)时，生成UUID失败: %v", err)
+		LOG.Error("获取登录信息(GetLoginInfo)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取登录信息(GetLoginInfo)时，执行失败: %v", err)
+		LOG.Error("获取登录信息(GetLoginInfo)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -405,18 +421,18 @@ func (a *apiInfo) GetLoginInfo() (Response wba.APIResponseInfo) {
 
 // GetVersionInfo 获取协议信息
 func (a *apiInfo) GetVersionInfo() (Response wba.APIResponseInfo) {
-	LOG.INFO("获取协议信息(GetVersionInfo)")
+	LOG.Info("获取协议信息(GetVersionInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_version_info"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取协议信息(GetVersionInfo)时，生成UUID失败: %v", err)
+		LOG.Error("获取协议信息(GetVersionInfo)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取登录信息(GetVersionInfo)时，执行失败: %v", err)
+		LOG.Error("获取登录信息(GetVersionInfo)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -424,19 +440,19 @@ func (a *apiInfo) GetVersionInfo() (Response wba.APIResponseInfo) {
 
 // GetMsg 获取消息
 func (a *apiInfo) GetMsg(messageId int32) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取消息(GetMsg)")
+	LOG.Info("获取消息(GetMsg)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_msg"
 	messageData.Params.MessageId = messageId
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取消息(GetMsg)时，生成UUID失败: %v", err)
+		LOG.Error("获取消息(GetMsg)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取消息(GetMsg)时，执行失败: %v", err)
+		LOG.Error("获取消息(GetMsg)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -444,19 +460,19 @@ func (a *apiInfo) GetMsg(messageId int32) (Response wba.APIResponseInfo) {
 
 // GetForwardMsg 获取合并转发消息
 func (a *apiInfo) GetForwardMsg(id string) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取合并转发消息(GetForwardMsg)")
+	LOG.Info("获取合并转发消息(GetForwardMsg)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_forward_msg"
 	messageData.Params.Id = id
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取合并转发消息(GetForwardMsg)时，生成UUID失败: %v", err)
+		LOG.Error("获取合并转发消息(GetForwardMsg)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取合并转发消息(GetForwardMsg)时，执行失败: %v", err)
+		LOG.Error("获取合并转发消息(GetForwardMsg)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -464,7 +480,7 @@ func (a *apiInfo) GetForwardMsg(id string) (Response wba.APIResponseInfo) {
 
 // GetStrangerInfo 获取陌生人信息
 func (a *apiInfo) GetStrangerInfo(userId int64, noCache bool) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取陌生人信息(GetStrangerInfo)")
+	LOG.Info("获取陌生人信息(GetStrangerInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_stranger_info"
@@ -472,12 +488,12 @@ func (a *apiInfo) GetStrangerInfo(userId int64, noCache bool) (Response wba.APIR
 	messageData.Params.NoCache = noCache
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取陌生人信息(GetStrangerInfo)时，生成UUID失败: %v", err)
+		LOG.Error("获取陌生人信息(GetStrangerInfo)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取陌生人信息(GetStrangerInfo)时，执行失败: %v", err)
+		LOG.Error("获取陌生人信息(GetStrangerInfo)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -485,18 +501,18 @@ func (a *apiInfo) GetStrangerInfo(userId int64, noCache bool) (Response wba.APIR
 
 // GetFriendList 获取好友列表
 func (a *apiInfo) GetFriendList() (Response wba.APIResponseInfo) {
-	LOG.INFO("获取好友列表(GetFriendList)")
+	LOG.Info("获取好友列表(GetFriendList)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_friend_list"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取好友列表(GetFriendList)时，生成UUID失败: %v", err)
+		LOG.Error("获取好友列表(GetFriendList)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取好友列表(GetFriendList)时，执行失败: %v", err)
+		LOG.Error("获取好友列表(GetFriendList)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -504,18 +520,18 @@ func (a *apiInfo) GetFriendList() (Response wba.APIResponseInfo) {
 
 // GetGroupList 获取群列表
 func (a *apiInfo) GetGroupList() (Response wba.APIResponseInfo) {
-	LOG.INFO("获取群列表(GetGroupList)")
+	LOG.Info("获取群列表(GetGroupList)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_group_list"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取群列表(GetGroupList)时，生成UUID失败: %v", err)
+		LOG.Error("获取群列表(GetGroupList)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取群列表(GetGroupList)时，执行失败: %v", err)
+		LOG.Error("获取群列表(GetGroupList)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -523,7 +539,7 @@ func (a *apiInfo) GetGroupList() (Response wba.APIResponseInfo) {
 
 // GetGroupInfo 获取群信息
 func (a *apiInfo) GetGroupInfo(groupId int64, noCache bool) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取群信息(GetGroupInfo)")
+	LOG.Info("获取群信息(GetGroupInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_group_info"
@@ -531,12 +547,12 @@ func (a *apiInfo) GetGroupInfo(groupId int64, noCache bool) (Response wba.APIRes
 	messageData.Params.NoCache = noCache
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取群信息(GetGroupInfo)时，生成UUID失败: %v", err)
+		LOG.Error("获取群信息(GetGroupInfo)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取群信息(GetGroupInfo)时，执行失败: %v", err)
+		LOG.Error("获取群信息(GetGroupInfo)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -544,7 +560,7 @@ func (a *apiInfo) GetGroupInfo(groupId int64, noCache bool) (Response wba.APIRes
 
 // GetGroupMemberInfo 获取群成员信息
 func (a *apiInfo) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取群成员信息(GetGroupMemberInfo)")
+	LOG.Info("获取群成员信息(GetGroupMemberInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_group_member_info"
@@ -553,12 +569,12 @@ func (a *apiInfo) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) 
 	messageData.Params.NoCache = noCache
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取群成员信息(GetGroupMemberInfo)时，生成UUID失败: %v", err)
+		LOG.Error("获取群成员信息(GetGroupMemberInfo)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取群成员信息(GetGroupMemberInfo)时，执行失败: %v", err)
+		LOG.Error("获取群成员信息(GetGroupMemberInfo)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -566,19 +582,19 @@ func (a *apiInfo) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) 
 
 // GetGroupMemberList 获取群成员列表
 func (a *apiInfo) GetGroupMemberList(groupId int64) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取群成员列表(GetGroupMemberList)")
+	LOG.Info("获取群成员列表(GetGroupMemberList)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_group_member_list"
 	messageData.Params.GroupId = groupId
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取群成员列表(GetGroupMemberList)时，生成UUID失败: %v", err)
+		LOG.Error("获取群成员列表(GetGroupMemberList)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取群成员列表(GetGroupMemberList)时，执行失败: %v", err)
+		LOG.Error("获取群成员列表(GetGroupMemberList)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -586,7 +602,7 @@ func (a *apiInfo) GetGroupMemberList(groupId int64) (Response wba.APIResponseInf
 
 // GetGroupHonorInfo 获取群荣誉信息
 func (a *apiInfo) GetGroupHonorInfo(groupId int64, Type string) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取群荣誉信息(GetGroupHonorInfo)")
+	LOG.Info("获取群荣誉信息(GetGroupHonorInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_group_honor_info"
@@ -594,12 +610,12 @@ func (a *apiInfo) GetGroupHonorInfo(groupId int64, Type string) (Response wba.AP
 	messageData.Params.Type = Type
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取群荣誉信息(GetGroupHonorInfo)时，生成UUID失败: %v", err)
+		LOG.Error("获取群荣誉信息(GetGroupHonorInfo)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取群荣誉信息(GetGroupHonorInfo)时，执行失败: %v", err)
+		LOG.Error("获取群荣誉信息(GetGroupHonorInfo)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -607,19 +623,19 @@ func (a *apiInfo) GetGroupHonorInfo(groupId int64, Type string) (Response wba.AP
 
 // GetCookies 获取Cookies
 func (a *apiInfo) GetCookies(domain string) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取Cookies(GetCookies)")
+	LOG.Info("获取Cookies(GetCookies)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_cookies"
 	messageData.Params.Domain = domain
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取Cookies(GetCookies)时，生成UUID失败: %v", err)
+		LOG.Error("获取Cookies(GetCookies)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取Cookies(GetCookies)时，执行失败: %v", err)
+		LOG.Error("获取Cookies(GetCookies)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -627,18 +643,18 @@ func (a *apiInfo) GetCookies(domain string) (Response wba.APIResponseInfo) {
 
 // GetCSRFToken 获取CSRF Token
 func (a *apiInfo) GetCSRFToken() (Response wba.APIResponseInfo) {
-	LOG.INFO("获取CSRF Token(GetCSRFToken)")
+	LOG.Info("获取CSRF Token(GetCSRFToken)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_csrf_token"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取CSRF Token(GetCSRFToken)时，生成UUID失败: %v", err)
+		LOG.Error("获取CSRF Token(GetCSRFToken)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取CSRF Token(GetCSRFToken)时，执行失败: %v", err)
+		LOG.Error("获取CSRF Token(GetCSRFToken)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -646,19 +662,19 @@ func (a *apiInfo) GetCSRFToken() (Response wba.APIResponseInfo) {
 
 // GetCredentials 获取登录令牌
 func (a *apiInfo) GetCredentials(domain string) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取登录令牌(GetCredentials)")
+	LOG.Info("获取登录令牌(GetCredentials)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_credentials"
 	messageData.Params.Domain = domain
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取登录令牌(GetCredentials)时，生成UUID失败: %v", err)
+		LOG.Error("获取登录令牌(GetCredentials)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取登录令牌(GetCredentials)时，执行失败: %v", err)
+		LOG.Error("获取登录令牌(GetCredentials)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -666,7 +682,7 @@ func (a *apiInfo) GetCredentials(domain string) (Response wba.APIResponseInfo) {
 
 // GetRecord 获取语音
 func (a *apiInfo) GetRecord(file string, outFormat string) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取语音(GetRecord)")
+	LOG.Info("获取语音(GetRecord)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_record"
@@ -674,12 +690,12 @@ func (a *apiInfo) GetRecord(file string, outFormat string) (Response wba.APIResp
 	messageData.Params.OutFormat = outFormat
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取语音(GetRecord)时，生成UUID失败: %v", err)
+		LOG.Error("获取语音(GetRecord)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取语音(GetRecord)时，执行失败: %v", err)
+		LOG.Error("获取语音(GetRecord)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -687,19 +703,19 @@ func (a *apiInfo) GetRecord(file string, outFormat string) (Response wba.APIResp
 
 // GetImage 获取图片
 func (a *apiInfo) GetImage(file string) (Response wba.APIResponseInfo) {
-	LOG.INFO("获取图片(GetImage)")
+	LOG.Info("获取图片(GetImage)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_image"
 	messageData.Params.File = file
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取图片(GetImage)时，生成UUID失败: %v", err)
+		LOG.Error("获取图片(GetImage)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取图片(GetImage)时，执行失败: %v", err)
+		LOG.Error("获取图片(GetImage)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -707,18 +723,18 @@ func (a *apiInfo) GetImage(file string) (Response wba.APIResponseInfo) {
 
 // CanSendImage 检查是否可以发送图片
 func (a *apiInfo) CanSendImage() (Response wba.APIResponseInfo) {
-	LOG.INFO("检查是否可以发送图片(CanSendImage)")
+	LOG.Info("检查是否可以发送图片(CanSendImage)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "can_send_image"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("检查是否可以发送图片(CanSendImage)时，生成UUID失败: %v", err)
+		LOG.Error("检查是否可以发送图片(CanSendImage)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("检查是否可以发送图片(CanSendImage)时，执行失败: %v", err)
+		LOG.Error("检查是否可以发送图片(CanSendImage)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -726,18 +742,18 @@ func (a *apiInfo) CanSendImage() (Response wba.APIResponseInfo) {
 
 // CanSendRecord 检查是否可以发送语音
 func (a *apiInfo) CanSendRecord() (Response wba.APIResponseInfo) {
-	LOG.INFO("检查是否可以发送语音(CanSendRecord)")
+	LOG.Info("检查是否可以发送语音(CanSendRecord)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "can_send_record"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("检查是否可以发送语音(CanSendRecord)时，生成UUID失败: %v", err)
+		LOG.Error("检查是否可以发送语音(CanSendRecord)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("检查是否可以发送语音(CanSendRecord)时，执行失败: %v", err)
+		LOG.Error("检查是否可以发送语音(CanSendRecord)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -745,18 +761,18 @@ func (a *apiInfo) CanSendRecord() (Response wba.APIResponseInfo) {
 
 // GetStatus 获取状态
 func (a *apiInfo) GetStatus() (Response wba.APIResponseInfo) {
-	LOG.INFO("获取状态(GetStatus)")
+	LOG.Info("获取状态(GetStatus)")
 	var messageData wba.APIRequestInfo
 	var err error
 	messageData.Action = "get_status"
 	messageData.Echo, err = GenerateUUID()
 	if err != nil {
-		LOG.ERROR("获取状态(GetStatus)时，生成UUID失败: %v", err)
+		LOG.Error("获取状态(GetStatus)时，生成UUID失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	Response, err = wsAPI(messageData)
 	if err != nil {
-		LOG.ERROR("获取状态(GetStatus)时，执行失败: %v", err)
+		LOG.Error("获取状态(GetStatus)时，执行失败: %v", err)
 		return wba.APIResponseInfo{}
 	}
 	return Response
@@ -767,7 +783,7 @@ func (a *apiInfo) GetStatus() (Response wba.APIResponseInfo) {
 /*
 关于LOG模块的说明
 
-1.日志模块使用go-logging库，日志级别分为DEBUG、INFO、WARN、ERROR。
+1.日志模块使用go-logging库，日志级别分为DEBUG、Info、Warn、Error。
 
 2.日志模块提供LogWith方法，可以自定义日志级别，调用级别为DEBUG时，会打印输出调用者的文件名、函数名、行号。
 
@@ -775,24 +791,31 @@ func (a *apiInfo) GetStatus() (Response wba.APIResponseInfo) {
 */
 
 func (a *apiInfo) LogWith(level string, content string, args ...interface{}) {
+	level = strings.ToLower(level)
 	switch level {
-	case "DEBUG":
-		LOG.DEBUG(content, args...)
+	case "trace":
+		LOG.Trace(content, args...)
 		return
-	case "WARN":
-		LOG.WARN(content, args...)
+	case "debug":
+		LOG.Debug(content, args...)
 		return
-	case "ERROR":
-		LOG.ERROR(content, args...)
+	case "notice":
+		LOG.Notice(content, args...)
+		return
+	case "warn":
+		LOG.Warn(content, args...)
+		return
+	case "error":
+		LOG.Error(content, args...)
 		return
 	default:
-		LOG.INFO(content, args...)
+		LOG.Info(content, args...)
 		return
 	}
 }
 
 func (a *apiInfo) Log(content string, args ...interface{}) {
-	LOG.INFO(content, args...)
+	LOG.Info(content, args...)
 }
 
 //database模块
