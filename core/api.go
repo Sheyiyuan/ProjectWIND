@@ -818,7 +818,7 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 }
 
 //database模块
-//TODO: 数据库模块待实现
+//数据库部分允许字符串变量的读写操作，允许获取配置项操作
 
 // 文件管理模块
 //TODO: 文件管理模块待实现
