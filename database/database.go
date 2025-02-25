@@ -2,7 +2,6 @@ package database
 
 import (
 	"ProjectWIND/LOG"
-	"ProjectWIND/wba"
 	"encoding/json"
 	"errors"
 	"os"
@@ -83,7 +82,7 @@ func (this *Database) addDatamap(id string) {
 // func hash(word string) string {
 // 	hash, err := bcrypt.GenerateFromPassword([]byte(word), bcrypt.DefaultCost)
 // 	if err != nil {
-// 		LOG.ERROR("[ERROR]Error while hash password: %v", err)
+// 		LOG.Error("[Error]Error while hash password: %v", err)
 // 		return ""
 // 	}
 // 	return string(hash)
@@ -98,7 +97,7 @@ func folderCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		err := os.MkdirAll(filename, 0755)
 		if err != nil {
-			LOG.FATAL("[ERROR]Error occured while create folder: %v", err)
+			LOG.Fatal("[Error]Error occured while create folder: %v", err)
 		}
 	}
 }
@@ -110,12 +109,12 @@ func fileCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
 		if err != nil {
-			LOG.FATAL("[ERROR]Error occured while create file: %v", err)
+			LOG.Fatal("[Error]Error occured while create file: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.FATAL("[ERROR]Error occured while close file: %v", err)
+				LOG.Fatal("[Error]Error occured while close file: %v", err)
 			}
 		}(file)
 	}
@@ -124,13 +123,13 @@ func fileCheck(filename string) {
 func writeContent(f *os.File, str string) error {
 	// 写入内容到文件
 	if f == nil {
-		// log.Printf("[ERROR]file is nil")
-		LOG.ERROR("[ERROR]file is nil")
+		// log.Printf("[Error]file is nil")
+		LOG.Error("[Error]file is nil")
 		return errors.New("file is nil")
 	}
 	_, err := f.Write([]byte(str))
 	if err != nil {
-		LOG.ERROR("[ERROR]Error while write content to file: %v", err)
+		LOG.Error("[Error]Error while write content to file: %v", err)
 		return err
 	}
 	return nil
@@ -152,18 +151,18 @@ func getCorePassword() string {
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
 	if err != nil {
-		LOG.ERROR("[WARNING]Error while read file %s: %v")
+		LOG.Error("[Error]Error while read file %s: %v", filename, err)
 		return ""
 	}
 	config := make(map[string]string)
 	err = json.Unmarshal([]byte(dataJson), config)
 	if err != nil {
-		LOG.WARN("[WARNING]Error while unmarshal data: %v", err)
+		LOG.Error("[Error]Error while unmarshal data: %v", err)
 		return ""
 	}
 	password, ok := config["password"]
 	if !ok {
-		LOG.WARN("[WARNING]Password not found in core.json")
+		LOG.Warn("[Warning]Password not found in core.json")
 		return ""
 	}
 	return password
@@ -173,13 +172,13 @@ func saveData(db *Database) error {
 	// 保存数据到文件
 	dataJson, err := json.Marshal(db)
 	if err != nil {
-		LOG.ERROR("[ERROR]:Error while marshal data: %v", err)
+		LOG.Error("[Error]:Error while marshal data: %v", err)
 		return err
 	}
 	filename := address
 	file, err := os.Create(filename)
 	if err != nil {
-		LOG.ERROR("[ERROR]:Error while create file %s: %v", filename, err)
+		LOG.Error("[Error]:Error while create file %s: %v", filename, err)
 		return err
 	}
 	writeContent(file, string(dataJson))
@@ -192,14 +191,14 @@ func loadData(db *Database) error {
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
 	if err != nil {
-		// log.Printf("[ERROR]:Error while read file %s: %v", filename, err)
-		LOG.ERROR("[ERROR]:Error while read file %s: %v", filename, err)
+		// log.Printf("[Error]:Error while read file %s: %v", filename, err)
+		LOG.Error("[Error]:Error while read file %s: %v", filename, err)
 		return err
 	}
 	err = json.Unmarshal([]byte(dataJson), db)
 	if err != nil {
-		// log.Printf("[ERROR]:Error while unmarshal data: %v", err)
-		LOG.WARN("[WARNING]:Error while unmarshal data: %v", err)
+		// log.Printf("[Error]:Error while unmarshal data: %v", err)
+		LOG.Warn("[Warning]:Error while unmarshal data: %v", err)
 		return err
 	}
 	return nil
@@ -212,11 +211,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
 		// 创建新数据表
-		DB.Datamaps[datamap] = newDatamap(datamap)
+		DB.addDatamap(datamap)
 		dm = DB.Datamaps[datamap]
 	}
 	if !allowed && dm.Permission != "private" {
-		LOG.WARN("[WARNING]:Permission denied")
+		LOG.Warn("[Warning]:Permission denied")
 		return
 	}
 	switch unit {
@@ -225,52 +224,52 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		case "number":
 			valueInt64, ok := value.(int64) // 断言value为int64类型
 			if !ok {
-				LOG.ERROR("[ERROR]:Value cannot be asserted to int64")
+				LOG.Error("[Error]:Value cannot be asserted to int64")
 				return
 			}
 			dm.Configs.Number[key] = valueInt64 // 使用断言后的int64值
 		case "string":
 			valueStr, ok := value.(string) // 断言value为string类型
 			if !ok {
-				LOG.ERROR("[ERROR]:Value cannot be asserted to string")
+				LOG.Error("[Error]:Value cannot be asserted to string")
 				return
 			}
 			dm.Configs.String[key] = valueStr // 使用断言后的string值
 		case "float":
 			valueFloat64, ok := value.(float64) // 断言value为float64类型
 			if !ok {
-				LOG.ERROR("[ERROR]:Value cannot be asserted to float64")
+				LOG.Error("[Error]:Value cannot be asserted to float64")
 				return
 			}
 			dm.Configs.Float[key] = valueFloat64 // 使用断言后的float64值
 		case "number_slice":
 			valueInt64Slice, ok := value.([]int64) // 断言value为[]int64类型
 			if !ok {
-				LOG.ERROR("[ERROR]:Value cannot be asserted to []int64")
+				LOG.Error("[Error]:Value cannot be asserted to []int64")
 				return
 			}
 			dm.Configs.Number_Slice[key] = valueInt64Slice // 使用断言后的[]int64值
 		case "string_slice":
 			valueStrSlice, ok := value.([]string) // 断言value为[]string类型
 			if !ok {
-				LOG.ERROR("[ERROR]:Value cannot be asserted to []string")
+				LOG.Error("[Error]:Value cannot be asserted to []string")
 				return
 			}
 			dm.Configs.String_Slice[key] = valueStrSlice // 使用断言后的[]string值
 		case "hash":
 			valueStr, ok := value.(string) // 断言value为string类型
 			if !ok {
-				LOG.ERROR("[ERROR]:Value cannot be asserted to string")
+				LOG.Error("[Error]:Value cannot be asserted to string")
 				return
 			}
 			dm.Configs.Hash = valueStr // 使用断言后的string值
 		default:
-			LOG.ERROR("[ERROR]:Invalid id %s", id)
+			LOG.Error("[Error]:Invalid id %s", id)
 		}
 	case "user":
 		valueStr, ok := value.(string) // 断言value为string类型
 		if !ok {
-			LOG.ERROR("[ERROR]:Value cannot be asserted to string")
+			LOG.Error("[Error]:Value cannot be asserted to string")
 			return
 		}
 		user, ok := dm.Users[id]
@@ -288,7 +287,7 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	case "group":
 		valueStr, ok := value.(string) // 断言value为string类型
 		if !ok {
-			LOG.ERROR("[ERROR]:Value cannot be asserted to string")
+			LOG.Error("[Error]:Value cannot be asserted to string")
 			return
 		}
 		group, ok := dm.Groups[id]
@@ -306,7 +305,7 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	case "global":
 		valueStr, ok := value.(string) // 断言value为string类型
 		if !ok {
-			LOG.ERROR("[ERROR]:Value cannot be asserted to string")
+			LOG.Error("[Error]:Value cannot be asserted to string")
 			return
 		}
 		global, ok := dm.Global[id]
@@ -322,18 +321,18 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		}
 		global.Data[key] = valueStr // 使用断言后的string值
 	default:
-		LOG.ERROR("[ERROR]:Invalid unit %s", unit)
+		LOG.Error("[Error]:Invalid unit %s", unit)
 	}
 }
 
 func dataGet(datamap string, unit string, id string, key string, allowed bool) (interface{}, bool) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
-		LOG.WARN("[WARNING]:Datamap %s not found", datamap)
+		LOG.Warn("[Warning]:Datamap %s not found", datamap)
 		return "", false
 	}
 	if !allowed && dm.Permission != "private" {
-		LOG.WARN("[WARNING]:Permission denied")
+		LOG.Warn("[Warning]:Permission denied")
 		return "", false
 	}
 	switch unit {
@@ -342,104 +341,104 @@ func dataGet(datamap string, unit string, id string, key string, allowed bool) (
 		case "number":
 			value, ok := dm.Configs.Number[key]
 			if !ok {
-				LOG.WARN("[WARNING]:Config %s not found", key)
+				LOG.Warn("[Warning]:Config %s not found", key)
 				return 0, false
 			}
 			return value, true
 		case "string":
 			value, ok := dm.Configs.String[key]
 			if !ok {
-				LOG.WARN("[WARNING]:Config %s not found", key)
+				LOG.Warn("[Warning]:Config %s not found", key)
 				return "", false
 			}
 			return value, true
 		case "float":
 			value, ok := dm.Configs.Float[key]
 			if !ok {
-				LOG.WARN("[WARNING]:Config %s not found", key)
+				LOG.Warn("[Warning]:Config %s not found", key)
 				return 0.0, false
 			}
 			return value, true
 		case "number_slice":
 			value, ok := dm.Configs.Number_Slice[key]
 			if !ok {
-				LOG.WARN("[WARNING]:Config %s not found", key)
+				LOG.Warn("[Warning]:Config %s not found", key)
 				return []int64{}, false
 			}
 			return value, true
 		case "string_slice":
 			value, ok := dm.Configs.String_Slice[key]
 			if !ok {
-				LOG.WARN("[WARNING]:Config %s not found", key)
+				LOG.Warn("[Warning]:Config %s not found", key)
 				return []string{}, false
 			}
 			return value, true
 		case "hash":
 			return dm.Configs.Hash, true
 		default:
-			LOG.ERROR("[ERROR]:Invalid id %s", id)
+			LOG.Error("[Error]:Invalid id %s", id)
 			return "", false
 		}
 	case "user":
 		user, ok := dm.Users[id]
 		if !ok {
-			LOG.WARN("[WARNING]:User %s not found", id)
+			LOG.Warn("[Warning]:User %s not found", id)
 			return "", false
 		}
 		if user.Data == nil {
-			LOG.WARN("[WARNING]:User %s's data is nil", id)
+			LOG.Warn("[Warning]:User %s's data is nil", id)
 			return "", false
 		}
 		value, ok := user.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:User %s's data %s not found", id, key)
+			LOG.Warn("[Warning]:User %s's data %s not found", id, key)
 			return "", false
 		}
 		return value, true
 	case "group":
 		group, ok := dm.Groups[id]
 		if !ok {
-			LOG.WARN("[WARNING]:Group %s not found", id)
+			LOG.Warn("[Warning]:Group %s not found", id)
 			return "", false
 		}
 		if group.Data == nil {
-			LOG.WARN("[WARNING]:Group %s's data is nil", id)
+			LOG.Warn("[Warning]:Group %s's data is nil", id)
 			return "", false
 		}
 		value, ok := group.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:Group %s's data %s not found", id, key)
+			LOG.Warn("[Warning]:Group %s's data %s not found", id, key)
 			return "", false
 		}
 		return value, true
 	case "global":
 		global, ok := dm.Global[id]
 		if !ok {
-			LOG.WARN("[WARNING]:Global %s not found", id)
+			LOG.Warn("[Warning]:Global %s not found", id)
 			return "", false
 		}
 		if global.Data == nil {
-			LOG.WARN("[WARNING]:Global data of %s is nil", id)
+			LOG.Warn("[Warning]:Global data of %s is nil", id)
 			return "", false
 		}
 		value, ok := global.Data[key]
 		if !ok {
-			LOG.WARN("[WARNING]:Global data of %s's %s not found", id, key)
+			LOG.Warn("[Warning]:Global data of %s's %s not found", id, key)
 			return "", false
 		}
 		return value, true
 	default:
-		LOG.ERROR("[ERROR]:Invalid category %s", category)
+		LOG.Error("[Error]:Invalid unit %s", unit)
 		return "", false
 	}
 }
 
 func initializeDatabase() *Database {
 	// 启动并检查程序
-	LOG.INFO("Starting database ...")
+	LOG.Info("Starting database ...")
 	db := newDatabase()
 	loadData(&db)
-	LOG.INFO("Database started successfully.")
+	LOG.Info("Database started successfully.")
 	return &db
 }
 
@@ -460,12 +459,12 @@ func Start() {
 			select {
 			case <-dataChan:
 				// 接收到信号，保存数据并退出程序
-				LOG.INFO("Received signal, saving data and exiting...")
+				LOG.Info("Received signal, saving data and exiting...")
 				saveData(DB)
 				os.Exit(0)
 			case <-saveTicker.C:
 				// 定时保存数据
-				LOG.INFO("Saving data automatically...")
+				LOG.Info("Saving data automatically...")
 				saveData(DB)
 			}
 		}
@@ -481,60 +480,146 @@ func CreatePublicDatamap(id string) {
 	DB.Datamaps[id] = db
 }
 
-func Get(app wba.AppInfo, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
+func Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
 	// 查询数据
 	if unit == "config" && id == "hash" {
 		// app不允许访问hash数据
-		LOG.ERROR("[ERROR]:App %s is not allowed to access hash data", app.Name)
+		LOG.Error("[Error]:App %s is not allowed to access hash data", appName)
 		return "", false
 	}
 	if !isGettingConfig && unit == "config" {
 		// 不允许在非config数据表中访问config数据
-		LOG.ERROR("[ERROR]:App %s is not allowed to access config data", app.Name)
+		LOG.Error("[Error]:App %s is not allowed to access config data", appName)
 		return "", false
 	}
-	if app.Name != datamap {
+	if appName != datamap {
 		// 需要master密码来访问其他app的数据
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(app.Name, "config", "hash", "", "", false)
+			dataSet(appName, "config", "hash", "", "", false)
 		}
-		datahash, ok := dataGet(app.Name, "config", "hash", "", false)
+		datahash, ok := dataGet(appName, "config", "hash", "", false)
 		if !ok {
-			LOG.ERROR("[ERROR]:Error while get hash of %s", app.Name)
+			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
 		if hash != datahash {
-			LOG.WARN("[WARNING]:App %s is not allowed to access data of %s", app.Name, datamap)
-			return dataGet(app.Name, unit, id, key, false)
+			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
+			return dataGet(appName, unit, id, key, false)
 		}
 
 	}
-	return dataGet(app.Name, unit, id, key, true)
+	return dataGet(appName, unit, id, key, true)
 }
 
-func Set(app wba.AppInfo, datamap string, unit string, id string, key string, value interface{}) {
+func Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
 	// 修改数据
 	if unit == "config" {
 		// app不允许修改config数据
-		LOG.ERROR("[ERROR]:App %s is not allowed to modify config data", app.Name)
+		LOG.Error("[Error]:App %s is not allowed to modify config data", appName)
 		return
 	}
-	if app.Name != datamap {
+	if appName != datamap {
 		// 需要master密码来访问其他app的数据
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(app.Name, "config", "hash", "", "", false)
+			dataSet(appName, "config", "hash", "", "", false)
 		}
-		datahash, ok := dataGet(app.Name, "config", "hash", "", false)
+		datahash, ok := dataGet(appName, "config", "hash", "", false)
 		if !ok {
-			LOG.ERROR("[ERROR]:Error while get hash of %s", app.Name)
+			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
 		if hash != datahash {
-			LOG.WARN("[WARNING]:App %s is not allowed to access data of %s", app.Name, datamap)
-			dataSet(app.Name, unit, id, key, value, false)
+			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
+			dataSet(appName, unit, id, key, value, false)
 		}
 	}
-	dataSet(app.Name, unit, id, key, value, true)
+	dataSet(appName, unit, id, key, value, true)
 }
+
+type DatabaseHandlerImpl struct{}
+
+func (dbh *DatabaseHandlerImpl) Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
+	Set(appName, datamap, unit, id, key, value)
+}
+
+func (dbh *DatabaseHandlerImpl) Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
+	return Get(appName, datamap, unit, id, key, isGettingConfig)
+}
+
+// func VarSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
+// 	Set(app.Name, datamap, unit, id, key, value)
+// }
+
+// func VarGet(app wba.AppInfo, datamap string, unit string, id string, key string) (string, bool) {
+// 	res, ok := Get(app.Name, datamap, unit, id, key, false)
+// 	if !ok {
+// 		return "", false
+// 	}
+// 	resStr, ok := res.(string)
+// 	if !ok {
+// 		return "", false
+// 	}
+// 	return resStr, true
+// }
+
+// func GetIntConfig(app wba.AppInfo, datamap string, key string) (int64, bool) {
+// 	res, ok := Get(app.Name, datamap, "config", "number", key, true)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	resInt, ok := res.(int64)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	return resInt, true
+// }
+
+// func GetStringConfig(app wba.AppInfo, datamap string, key string) (string, bool) {
+// 	res, ok := Get(app.Name, datamap, "config", "string", key, true)
+// 	if !ok {
+// 		return "", false
+// 	}
+// 	resStr, ok := res.(string)
+// 	if !ok {
+// 		return "", false
+// 	}
+// 	return resStr, true
+// }
+
+// func GetFloatConfig(app wba.AppInfo, datamap string, key string) (float64, bool) {
+// 	res, ok := Get(app.Name, datamap, "config", "float", key, true)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	resFloat, ok := res.(float64)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	return resFloat, true
+// }
+
+// func GetIntSliceConfig(app wba.AppInfo, datamap string, key string) ([]int64, bool) {
+// 	res, ok := Get(app.Name, datamap, "config", "number_slice", key, true)
+// 	if !ok {
+// 		return nil, false
+// 	}
+// 	resSlice, ok := res.([]int64)
+// 	if !ok {
+// 		return nil, false
+// 	}
+// 	return resSlice, true
+// }
+
+// func GetStringSliceConfig(app wba.AppInfo, datamap string, key string) ([]string, bool) {
+// 	res, ok := Get(app.Name, datamap, "config", "string_slice", key, true)
+// 	if !ok {
+// 		return nil, false
+// 	}
+// 	resSlice, ok := res.([]string)
+// 	if !ok {
+// 		return nil, false
+// 	}
+// 	return resSlice, true
+// }

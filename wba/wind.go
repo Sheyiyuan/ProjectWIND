@@ -265,14 +265,9 @@ type WindStandardProtocolAPI interface {
 	Log(log string, args ...interface{})
 }
 
-type Database interface {
-	VarSet(app AppInfo, datamap string, unit string, id string, key string, value string)
-	VarGet(app AppInfo, datamap string, unit string, id string, key string) (string, bool)
-	GetIntConfig(app AppInfo, datamap string, key string) (int64, bool)
-	GetStringConfig(app AppInfo, datamap string, key string) (string, bool)
-	GetFloatConfig(app AppInfo, datamap string, key string) (float64, bool)
-	GetIntSliceConfig(app AppInfo, datamap string, key string) ([]int64, bool)
-	GetStringSliceConfig(app AppInfo, datamap string, key string) ([]string, bool)
+type DataBaseHandler interface {
+	Set(appName string, datamap string, unit string, id string, key string, value interface{})
+	Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool)
 }
 
 type AppInfo struct {
@@ -292,6 +287,7 @@ type AppInfo struct {
 	MetaEventHandler    func(msg MetaEventInfo)
 	ScheduledTasks      map[string]ScheduledTaskInfo
 	API                 map[string]interface{}
+	dbHandler           DataBaseHandler
 }
 
 func (ai AppInfo) Get() AppInfo {
@@ -309,6 +305,108 @@ func (ai *AppInfo) AddCmd(name string, cmd Cmd) {
 
 func (ai *AppInfo) AddNoticeEventHandler(ScheduledTask ScheduledTaskInfo) {
 	ai.ScheduledTasks[ScheduledTask.Name] = ScheduledTask
+}
+
+func (ai *AppInfo) VarSet(datamap string, unit string, id string, key string, value string) {
+	if ai.dbHandler != nil {
+		ai.dbHandler.Set(ai.Name, datamap, unit, id, key, value)
+	}
+}
+
+// VarGet 获取变量
+func (ai *AppInfo) VarGet(datamap string, unit string, id string, key string) (string, bool) {
+	if ai.dbHandler != nil {
+		res, ok := ai.dbHandler.Get(ai.Name, datamap, unit, id, key, false)
+		if !ok {
+			return "", false
+		}
+		resStr, ok := res.(string)
+		if !ok {
+			return "", false
+		}
+		return resStr, true
+	}
+	return "", false
+}
+
+// GetIntConfig 获取整数配置
+func (ai *AppInfo) GetIntConfig(datamap string, key string) (int64, bool) {
+	if ai.dbHandler != nil {
+		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "number", key, true)
+		if !ok {
+			return 0, false
+		}
+		resInt, ok := res.(int64)
+		if !ok {
+			return 0, false
+		}
+		return resInt, true
+	}
+	return 0, false
+}
+
+// GetStringConfig 获取字符串配置
+func (ai *AppInfo) GetStringConfig(datamap string, key string) (string, bool) {
+	if ai.dbHandler != nil {
+		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "string", key, true)
+		if !ok {
+			return "", false
+		}
+		resStr, ok := res.(string)
+		if !ok {
+			return "", false
+		}
+		return resStr, true
+	}
+	return "", false
+}
+
+// GetFloatConfig 获取浮点数配置
+func (ai *AppInfo) GetFloatConfig(datamap string, key string) (float64, bool) {
+	if ai.dbHandler != nil {
+		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "float", key, true)
+		if !ok {
+			return 0, false
+		}
+		resFloat, ok := res.(float64)
+		if !ok {
+			return 0, false
+		}
+		return resFloat, true
+	}
+	return 0, false
+}
+
+// GetIntSliceConfig 获取整数切片配置
+func (ai *AppInfo) GetIntSliceConfig(datamap string, key string) ([]int64, bool) {
+	if ai.dbHandler != nil {
+		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "number_slice", key, true)
+		if !ok {
+			return nil, false
+		}
+		resSlice, ok := res.([]int64)
+		if !ok {
+			return nil, false
+		}
+		return resSlice, true
+	}
+	return nil, false
+}
+
+// GetStringSliceConfig 获取字符串切片配置
+func (ai *AppInfo) GetStringSliceConfig(datamap string, key string) ([]string, bool) {
+	if ai.dbHandler != nil {
+		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "string_slice", key, true)
+		if !ok {
+			return nil, false
+		}
+		resSlice, ok := res.([]string)
+		if !ok {
+			return nil, false
+		}
+		return resSlice, true
+	}
+	return nil, false
 }
 
 type AppInfoOption func(ei *AppInfo)

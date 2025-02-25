@@ -2,7 +2,6 @@ package core
 
 import (
 	"ProjectWIND/LOG"
-	"ProjectWIND/database"
 	"ProjectWIND/wba"
 	"crypto/rand"
 	"fmt"
@@ -820,82 +819,6 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 
 //database模块
 //数据库部分允许字符串变量的读写操作，允许获取配置项操作
-
-func (a *apiInfo) VarSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
-	database.Set(app, datamap, unit, id, key, value)
-}
-
-func (a *apiInfo) VarGet(app wba.AppInfo, datamap string, unit string, id string, key string) (string, bool) {
-	res, ok := database.Get(app, datamap, unit, id, key, false)
-	if !ok {
-		return "", false
-	}
-	resStr, ok := res.(string)
-	if !ok {
-		return "", false
-	}
-	return resStr, true
-}
-
-func (a *apiInfo) GetIntConfig(app wba.AppInfo, datamap string, key string) (int64, bool) {
-	res, ok := database.Get(app, datamap, "config", "number", key, true)
-	if !ok {
-		return 0, false
-	}
-	resInt, ok := res.(int64)
-	if !ok {
-		return 0, false
-	}
-	return resInt, true
-}
-
-func (a *apiInfo) GetStringConfig(app wba.AppInfo, datamap string, key string) (string, bool) {
-	res, ok := database.Get(app, datamap, "config", "string", key, true)
-	if !ok {
-		return "", false
-	}
-	resStr, ok := res.(string)
-	if !ok {
-		return "", false
-	}
-	return resStr, true
-}
-
-func (a *apiInfo) GetFloatConfig(app wba.AppInfo, datamap string, key string) (float64, bool) {	
-	res, ok := database.Get(app, datamap, "config", "float", key, true)
-	if !ok {
-		return 0, false
-	}
-	resFloat, ok := res.(float64)
-	if !ok {
-		return 0, false
-	}
-	return resFloat, true
-}
-
-func (a *apiInfo) GetIntSliceConfig(app wba.AppInfo, datamap string, key string) ([]int64, bool) {
-	res, ok := database.Get(app, datamap, "config", "number_slice", key, true)
-	if !ok {
-		return nil, false
-	}
-	resSlice, ok := res.([]int64)
-	if !ok {
-		return nil, false
-	}
-	return resSlice, true
-}
-
-func (a *apiInfo) GetStringSliceConfig(app wba.AppInfo, datamap string, key string) ([]string, bool) {
-	res, ok := database.Get(app, datamap, "config", "string_slice", key, true)
-	if !ok {
-		return nil, false
-	}
-	resSlice, ok := res.([]string)
-	if !ok {
-		return nil, false
-	}
-	return resSlice, true
-}
 
 // 文件管理模块
 //TODO: 文件管理模块待实现
