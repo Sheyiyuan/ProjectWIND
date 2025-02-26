@@ -206,7 +206,7 @@ func loadData(db *Database) error {
 
 var DB *Database
 
-func dataSet(datamap string, unit string, id string, key string, value interface{}, allowed bool) {
+func dataSet(datamap string, unit string, id string, key string, value interface{}, allowed bool, master bool) {
 	// 修改数据
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
@@ -214,7 +214,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		DB.addDatamap(datamap)
 		dm = DB.Datamaps[datamap]
 	}
-	if !allowed && dm.Permission != "private" {
+	if dm.Permission == "private" && !allowed && !master {
+		LOG.Warn("[Warning]:Permission denied")
+		return
+	}
+	if dm.Permission == "master" && !master { 
 		LOG.Warn("[Warning]:Permission denied")
 		return
 	}
@@ -325,13 +329,17 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	}
 }
 
-func dataGet(datamap string, unit string, id string, key string, allowed bool) (interface{}, bool) {
+func dataGet(datamap string, unit string, id string, key string, allowed bool, master bool) (interface{}, bool) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
 		LOG.Warn("[Warning]:Datamap %s not found", datamap)
 		return "", false
 	}
-	if !allowed && dm.Permission != "private" {
+	if dm.Permission != "public" && !allowed && !master {
+		LOG.Warn("[Warning]:Permission denied")
+		return "", false
+	}
+	if dm.Permission == "master" && !master { 
 		LOG.Warn("[Warning]:Permission denied")
 		return "", false
 	}
@@ -480,6 +488,20 @@ func CreatePublicDatamap(id string) {
 	DB.Datamaps[id] = db
 }
 
+func CreateMasterDatamap(id string) {
+	db := newDatamap(id)
+	db.Permission = "master"
+	DB.Datamaps[id] = db
+}
+
+func MasterGet(datamap string, unit string, id string, key string) (interface{}, bool) {
+	return dataGet(datamap, unit, id, key, true, true)
+}
+
+func MasterSet(datamap string, unit string, id string, key string, value interface{}) {
+	dataSet(datamap, unit, id, key, value, true, true)
+}
+
 func Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
 	// 查询数据
 	if unit == "config" && id == "hash" {
@@ -497,19 +519,19 @@ func Get(appName string, datamap string, unit string, id string, key string, isG
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", false)
+			dataSet(appName, "config", "hash", "", "", false, false)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", false)
+		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
 		if !ok {
 			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
 		if hash != datahash {
 			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
-			return dataGet(appName, unit, id, key, false)
+			return dataGet(appName, unit, id, key, false, false)
 		}
 
 	}
-	return dataGet(appName, unit, id, key, true)
+	return dataGet(appName, unit, id, key, true, false)
 }
 
 func Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
@@ -524,18 +546,18 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", false)
+			dataSet(appName, "config", "hash", "", "", true, true)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", false)
+		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
 		if !ok {
 			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
 		if hash != datahash {
 			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
-			dataSet(appName, unit, id, key, value, false)
+			dataSet(appName, unit, id, key, value, false, false)
 		}
 	}
-	dataSet(appName, unit, id, key, value, true)
+	dataSet(appName, unit, id, key, value, true, false)
 }
 
 type DatabaseHandlerImpl struct{}
