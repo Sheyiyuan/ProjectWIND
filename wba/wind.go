@@ -266,8 +266,8 @@ type WindStandardProtocolAPI interface {
 }
 
 type DataBaseHandler interface {
-	Set(appName string, datamap string, unit string, id string, key string, value interface{})
-	Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool)
+	Set(appName string, dataMap string, unit string, id string, key string, value interface{})
+	Get(appName string, dataMap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool)
 }
 
 type AppInfo struct {
@@ -307,16 +307,20 @@ func (ai *AppInfo) AddNoticeEventHandler(ScheduledTask ScheduledTaskInfo) {
 	ai.ScheduledTasks[ScheduledTask.Name] = ScheduledTask
 }
 
-func (ai *AppInfo) VarSet(datamap string, unit string, id string, key string, value string) {
+func (ai *AppInfo) AddScheduledTask(task ScheduledTaskInfo) {
+	ai.ScheduledTasks[task.Name] = task
+}
+
+func (ai *AppInfo) VarSet(dataMap string, unit string, id string, key string, value string) {
 	if ai.dbHandler != nil {
-		ai.dbHandler.Set(ai.Name, datamap, unit, id, key, value)
+		ai.dbHandler.Set(ai.Name, dataMap, unit, id, key, value)
 	}
 }
 
 // VarGet 获取变量
-func (ai *AppInfo) VarGet(datamap string, unit string, id string, key string) (string, bool) {
+func (ai *AppInfo) VarGet(dataMap string, unit string, id string, key string) (string, bool) {
 	if ai.dbHandler != nil {
-		res, ok := ai.dbHandler.Get(ai.Name, datamap, unit, id, key, false)
+		res, ok := ai.dbHandler.Get(ai.Name, dataMap, unit, id, key, false)
 		if !ok {
 			return "", false
 		}
@@ -330,9 +334,9 @@ func (ai *AppInfo) VarGet(datamap string, unit string, id string, key string) (s
 }
 
 // GetIntConfig 获取整数配置
-func (ai *AppInfo) GetIntConfig(datamap string, key string) (int64, bool) {
+func (ai *AppInfo) GetIntConfig(dataMap string, key string) (int64, bool) {
 	if ai.dbHandler != nil {
-		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "number", key, true)
+		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "number", key, true)
 		if !ok {
 			return 0, false
 		}
@@ -346,9 +350,9 @@ func (ai *AppInfo) GetIntConfig(datamap string, key string) (int64, bool) {
 }
 
 // GetStringConfig 获取字符串配置
-func (ai *AppInfo) GetStringConfig(datamap string, key string) (string, bool) {
+func (ai *AppInfo) GetStringConfig(dataMap string, key string) (string, bool) {
 	if ai.dbHandler != nil {
-		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "string", key, true)
+		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "string", key, true)
 		if !ok {
 			return "", false
 		}
@@ -362,9 +366,9 @@ func (ai *AppInfo) GetStringConfig(datamap string, key string) (string, bool) {
 }
 
 // GetFloatConfig 获取浮点数配置
-func (ai *AppInfo) GetFloatConfig(datamap string, key string) (float64, bool) {
+func (ai *AppInfo) GetFloatConfig(dataMap string, key string) (float64, bool) {
 	if ai.dbHandler != nil {
-		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "float", key, true)
+		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "float", key, true)
 		if !ok {
 			return 0, false
 		}
@@ -378,9 +382,9 @@ func (ai *AppInfo) GetFloatConfig(datamap string, key string) (float64, bool) {
 }
 
 // GetIntSliceConfig 获取整数切片配置
-func (ai *AppInfo) GetIntSliceConfig(datamap string, key string) ([]int64, bool) {
+func (ai *AppInfo) GetIntSliceConfig(dataMap string, key string) ([]int64, bool) {
 	if ai.dbHandler != nil {
-		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "number_slice", key, true)
+		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "number_slice", key, true)
 		if !ok {
 			return nil, false
 		}
@@ -394,9 +398,9 @@ func (ai *AppInfo) GetIntSliceConfig(datamap string, key string) ([]int64, bool)
 }
 
 // GetStringSliceConfig 获取字符串切片配置
-func (ai *AppInfo) GetStringSliceConfig(datamap string, key string) ([]string, bool) {
+func (ai *AppInfo) GetStringSliceConfig(dataMap string, key string) ([]string, bool) {
 	if ai.dbHandler != nil {
-		res, ok := ai.dbHandler.Get(ai.Name, datamap, "config", "string_slice", key, true)
+		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "string_slice", key, true)
 		if !ok {
 			return nil, false
 		}
@@ -435,12 +439,6 @@ func WithDescription(description string) AppInfoOption {
 	}
 }
 
-func WithNamespace(namespace string) AppInfoOption {
-	return func(ei *AppInfo) {
-		ei.Namespace = namespace
-	}
-}
-
 func WithWebUrl(webUrl string) AppInfoOption {
 	return func(ei *AppInfo) {
 		ei.Homepage = webUrl
@@ -467,16 +465,17 @@ func WithRule(rule string) AppInfoOption {
 
 func NewApp(opts ...AppInfoOption) AppInfo {
 	Ext := AppInfo{
-		Name:        "WSP",
-		Version:     "v1.0.0",
-		Author:      "WSP",
-		Description: "A simple and easy-to-use bot framework",
-		Namespace:   "PUBLIC",
-		Homepage:    "https://github.com/Sheyiyuan/wind_app_model",
-		License:     "MIT",
-		AppType:     "fun",
-		Rule:        "none",
-		CmdMap:      make(map[string]Cmd),
+		Name:           "WSP",
+		Version:        "v1.0.0",
+		Author:         "WSP",
+		Description:    "A simple and easy-to-use bot framework",
+		Homepage:       "https://github.com/Sheyiyuan/wind_app_model",
+		License:        "MIT",
+		AppType:        "fun",
+		Rule:           "none",
+		CmdMap:         make(map[string]Cmd),
+		ScheduledTasks: map[string]ScheduledTaskInfo{},
+		API:            map[string]interface{}{},
 	}
 	for _, opt := range opts {
 		opt(&Ext)
