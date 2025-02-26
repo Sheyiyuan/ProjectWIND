@@ -10,16 +10,20 @@ import (
 )
 
 func Trace(text string, msg ...interface{}) {
-	pc, file, line, ok := runtime.Caller(3)
-	if !ok {
-		pc, file, line, ok = runtime.Caller(2)
+	var pc uintptr
+	var file string
+	var line int
+	var ok bool
+	// 从第 2 层开始循环查找调用栈，直到找不到调用信息为止
+	for i := 2; ; i++ {
+		pc, file, line, ok = runtime.Caller(i)
+		if !ok || line <= 0 {
+			pc, file, line, ok = runtime.Caller(i - 1)
+			break
+		}
 	}
-	if ok {
-		funcName := runtime.FuncForPC(pc).Name()
-		log.Printf("[Trace]  [%s:%d %s()] %s\n", file, line, funcName, fmt.Sprintf(text, msg...))
-	} else {
-		log.Printf("[Trace]  %s\n", fmt.Sprintf(text, msg...))
-	}
+	funcName := runtime.FuncForPC(pc).Name()
+	log.Printf("[Trace]  [%s:%d %s()] %s\n", file, line, funcName, fmt.Sprintf(text, msg...))
 }
 
 func Debug(text string, msg ...interface{}) {
