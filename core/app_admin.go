@@ -1,16 +1,11 @@
-//go:build windows
-// +build windows
-
 package core
 
 import (
 	"ProjectWIND/LOG"
 	"ProjectWIND/wba"
-	"fmt"
+	"github.com/dop251/goja"
 	"os"
 	"path/filepath"
-	"syscall"
-	"unsafe"
 )
 
 var CmdMap = make(map[string]wba.Cmd)
@@ -38,44 +33,8 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 	if file.IsDir() {
 		return 0, 0
 	}
+
 	ext := filepath.Ext(file.Name())
-	if ext == ".dll" {
-		pluginPath := filepath.Join(appsDir, file.Name())
-		lib, err := syscall.LoadLibrary(pluginPath)
-		if err != nil {
-			LOG.Error("加载应用 %s 失败: %v", pluginPath, err)
-			return 1, 0
-		}
-		defer func(handle syscall.Handle) {
-			err := syscall.FreeLibrary(handle)
-			if err != nil {
-				LOG.Error("释放应用 %s 时发生错误: %v", pluginPath, err)
-			}
-		}(lib)
-
-		// 获取函数地址
-		sym, err := syscall.GetProcAddress(lib, "AppInit")
-		if err != nil {
-			fmt.Println("找不到应用 %s 提供的 AppInit 接口: %v", err)
-			return 1, 0
-		}
-
-		// 定义函数类型
-		AppInitPtr := (*func() wba.AppInfo)(unsafe.Pointer(&sym))
-		AppInit := *AppInitPtr
-
-		app := AppInit()
-
-		err = app.Init(&AppApi)
-		if err != nil {
-			LOG.Error("初始化应用 %s 失败: %v", pluginPath, err)
-		}
-
-		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
-		LOG.Info("应用 %s 加载成功", pluginPath)
-		return 1, 1
-
-	}
 	if ext == ".js" {
 		pluginPath := filepath.Join(appsDir, file.Name())
 		jsCode, err := os.ReadFile(pluginPath)
@@ -106,7 +65,7 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wbaObj.Set("WithLicense", wba.WithLicense)
 		_ = wbaObj.Set("WithAppType", wba.WithAppType)
 		_ = wbaObj.Set("WithRule", wba.WithRule)
-		_ = wbaObj.Set("WSP", wsp)
+		_ = wbaObj.Set("wsp", wsp)
 		_ = wsp.Set("UnsafelySendMsg", AppApi.UnsafelySendMsg)
 		_ = wsp.Set("UnsafelySendPrivateMsg", AppApi.UnsafelySendPrivateMsg)
 		_ = wsp.Set("UnsafelySendGroupMsg", AppApi.UnsafelySendGroupMsg)
