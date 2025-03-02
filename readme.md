@@ -39,7 +39,7 @@ WIND（全称：WIND is not dice）是一个基于 Go 语言开发的bot框架�
 
 ## 3. hertz
 - **库名称**：hertz
-- **仓库地址**：[https://github.com/albertwidi/hertz](https://github.com/albertwidi/hertz)
+- **仓库地址**：[https://github.com/cloudwego/hertz](https://github.com/cloudwego/hertz)
 - **用途说明**：hertz 是一个基于 Go 语言开发的高性能 HTTP 路由器。在本项目中，它被用作项目的 HTTP 服务器，为项目提供了快速、高效的 HTTP 请求处理能力。让我们能够灵活地对 HTTP 请求进行处理。
 
 非常感谢以上项目团队的开源贡献，使得我们的项目开发能够借助这些优秀的工具快速推进，为用户带来更好的体验。
