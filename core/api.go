@@ -818,7 +818,108 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 }
 
 //database模块
-//数据库部分允许字符串变量的读写操作，允许获取配置项操作
+// //数据库部分允许字符串变量的读写操作，允许获取配置项操作
+// func (ai *AppInfo) VarSet(dataMap string, unit string, id string, key string, value string) {
+// 	if ai.dbHandler != nil {
+// 		ai.dbHandler.Set(ai.Name, dataMap, unit, id, key, value)
+// 	}
+// }
+
+// // VarGet 获取变量
+// func (ai *AppInfo) VarGet(dataMap string, unit string, id string, key string) (string, bool) {
+// 	if ai.dbHandler != nil {
+// 		res, ok := ai.dbHandler.Get(ai.Name, dataMap, unit, id, key, false)
+// 		if !ok {
+// 			return "", false
+// 		}
+// 		resStr, ok := res.(string)
+// 		if !ok {
+// 			return "", false
+// 		}
+// 		return resStr, true
+// 	}
+// 	return "", false
+// }
+
+// // GetIntConfig 获取整数配置
+// func (ai *AppInfo) GetIntConfig(dataMap string, key string) (int64, bool) {
+// 	if ai.dbHandler != nil {
+// 		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "number", key, true)
+// 		if !ok {
+// 			return 0, false
+// 		}
+// 		resInt, ok := res.(int64)
+// 		if !ok {
+// 			return 0, false
+// 		}
+// 		return resInt, true
+// 	}
+// 	return 0, false
+// }
+
+// // GetStringConfig 获取字符串配置
+// func (ai *AppInfo) GetStringConfig(dataMap string, key string) (string, bool) {
+// 	if ai.dbHandler != nil {
+// 		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "string", key, true)
+// 		if !ok {
+// 			return "", false
+// 		}
+// 		resStr, ok := res.(string)
+// 		if !ok {
+// 			return "", false
+// 		}
+// 		return resStr, true
+// 	}
+// 	return "", false
+// }
+
+// // GetFloatConfig 获取浮点数配置
+// func (ai *AppInfo) GetFloatConfig(dataMap string, key string) (float64, bool) {
+// 	if ai.dbHandler != nil {
+// 		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "float", key, true)
+// 		if !ok {
+// 			return 0, false
+// 		}
+// 		resFloat, ok := res.(float64)
+// 		if !ok {
+// 			return 0, false
+// 		}
+// 		return resFloat, true
+// 	}
+// 	return 0, false
+// }
+
+// // GetIntSliceConfig 获取整数切片配置
+// func (ai *AppInfo) GetIntSliceConfig(dataMap string, key string) ([]int64, bool) {
+// 	if ai.dbHandler != nil {
+// 		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "number_slice", key, true)
+// 		if !ok {
+// 			return nil, false
+// 		}
+// 		resSlice, ok := res.([]int64)
+// 		if !ok {
+// 			return nil, false
+// 		}
+// 		return resSlice, true
+// 	}
+// 	return nil, false
+// }
+
+// // GetStringSliceConfig 获取字符串切片配置
+// func (ai *AppInfo) GetStringSliceConfig(dataMap string, key string) ([]string, bool) {
+// 	if ai.dbHandler != nil {
+// 		res, ok := ai.dbHandler.Get(ai.Name, dataMap, "config", "string_slice", key, true)
+// 		if !ok {
+// 			return nil, false
+// 		}
+// 		resSlice, ok := res.([]string)
+// 		if !ok {
+// 			return nil, false
+// 		}
+// 		return resSlice, true
+// 	}
+// 	return nil, false
+// }
 
 // 文件管理模块
 //TODO: 文件管理模块待实现

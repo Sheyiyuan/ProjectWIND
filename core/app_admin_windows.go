@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"syscall"
 	"unsafe"
+	"github.com/dop251/goja"
 )
 
 var CmdMap = make(map[string]wba.Cmd)

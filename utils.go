@@ -362,7 +362,7 @@ func startDatabase() {
 	time.Sleep(time.Second * 1)
 	// 读写测试
 	// for i := 0; i < 10; i++ {
-	// 	data, ok := database.Get("user", "test", "test"+fmt.Sprintf("%d", i))
+	// 	data, ok := database.Get("go", "go", "user", "test", "test"+fmt.Sprintf("%d", i), false)
 	// 	if !ok {
 	// 		LOG.Error("Failed to get data from database")
 	// 		continue
@@ -372,12 +372,12 @@ func startDatabase() {
 	// }
 	// time.Sleep(time.Second * 1)
 	// for i := 0; i < 10; i++ {
-	// 	database.Set("user", "test", "test"+fmt.Sprintf("%d", i), "test"+fmt.Sprintf("%d", 1000+i))
+	// 	database.Set("go", "go", "user", "test", "test"+fmt.Sprintf("%d", i), "test"+fmt.Sprintf("%d", 1000+i))
 	// 	time.Sleep(time.Second * 1)
 	// }
 	// time.Sleep(time.Second * 1)
 	// for i := 0; i < 10; i++ {
-	// 	data, ok := database.Get("user", "test", "test"+fmt.Sprintf("%d", i))
+	// 	data, ok := database.Get("go", "go", "user", "test", "test"+fmt.Sprintf("%d", i), false)
 	// 	if !ok {
 	// 		LOG.Error("Failed to get data from database")
 	// 		continue
