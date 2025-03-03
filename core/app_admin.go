@@ -2,15 +2,21 @@ package core
 
 import (
 	"ProjectWIND/LOG"
+	"ProjectWIND/typed"
 	"ProjectWIND/wba"
 	"github.com/dop251/goja"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-var CmdMap = make(map[string]wba.Cmd)
+var CmdMap = make([]map[string]wba.Cmd, 4)
+var AppMap = make(map[typed.AppKey]wba.AppInfo)
 
 func ReloadApps() (total int, success int) {
+	// 清空AppMap和CmdMap
+	CmdMap = make([]map[string]wba.Cmd, 4)
+	AppMap = make(map[typed.AppKey]wba.AppInfo)
 	appsDir := "./data/app/"
 	appFiles, err := os.ReadDir(appsDir)
 	total = 0
@@ -25,7 +31,7 @@ func ReloadApps() (total int, success int) {
 		total += totalDelta
 		success += successDelta
 	}
-	CmdMap = mergeMaps(CmdMap, AppCore.CmdMap)
+	CmdMap[0] = AppCore.CmdMap
 	return total, success
 }
 
@@ -55,8 +61,6 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		wsp := runtime.NewObject()
 		_ = runtime.Set("wba", wbaObj)
 		_ = wbaObj.Set("NewApp", wba.NewApp)
-		_ = wbaObj.Set("NewCmd", wba.NewCmd)
-		_ = wbaObj.Set("NewScheduledTask", wba.NewScheduledTask)
 		_ = wbaObj.Set("WithName", wba.WithName)
 		_ = wbaObj.Set("WithAuthor", wba.WithAuthor)
 		_ = wbaObj.Set("WithVersion", wba.WithVersion)
@@ -163,8 +167,10 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			return 1, 0
 		}
 
+		AppMap[typed.AppKey{AppName: appInfo.Name, AppType: appInfo.AppType, AppVersion: appInfo.Version, AppLevel: checkAppLevel(appInfo)}] = appInfo
+		cmdIndex := AppTypeToInt(appInfo.AppType)
 		// 合并命令
-		CmdMap = mergeMaps(CmdMap, appInfo.CmdMap)
+		CmdMap[cmdIndex] = mergeMaps(CmdMap[cmdIndex], appInfo.CmdMap)
 
 		// 注册定时任务
 		for _, task := range appInfo.ScheduledTasks {
@@ -187,4 +193,20 @@ func mergeMaps(map1, map2 map[string]wba.Cmd) map[string]wba.Cmd {
 		map3[key] = value
 	}
 	return map3
+}
+
+func AppTypeToInt(appType string) int32 {
+	appType = strings.ToLower(appType)
+	switch appType {
+	case "system":
+		return 1
+	case "rule":
+		return 2
+	default:
+		return 3
+	}
+}
+
+func checkAppLevel(appInfo wba.AppInfo) int32 {
+	return 0
 }
