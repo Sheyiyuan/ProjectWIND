@@ -15,3 +15,10 @@ type Protocol struct {
 	Token    string `json:"token"`
 	Enable   bool   `json:"enable"`
 }
+
+type AppKey struct {
+	AppName    string `json:"app_name"`
+	AppType    string `json:"app_type"`
+	AppLevel   int32  `json:"app_level"`
+	AppVersion string `json:"app_version"`
+}

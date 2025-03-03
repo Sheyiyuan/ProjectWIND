@@ -461,15 +461,16 @@ func NewApp(opts ...AppInfoOption) AppInfo {
 	return Ext
 }
 
-func NewCmd(name string, description string, solve func(args []string, msg MessageEventInfo)) Cmd {
+func (ai *AppInfo) NewCmd(name string, description string, solve func(args []string, msg MessageEventInfo)) Cmd {
 	return Cmd{
-		NAME:  name,
-		DESC:  description,
-		SOLVE: solve,
+		Name:  name,
+		Desc:  description,
+		Solve: solve,
+		Rule:  ai.Rule,
 	}
 }
 
-func NewScheduledTask(name string, description string, cron string, task func()) ScheduledTaskInfo {
+func (ai *AppInfo) NewScheduledTask(name string, description string, cron string, task func()) ScheduledTaskInfo {
 	return ScheduledTaskInfo{
 		Name: name,
 		Desc: description,
@@ -479,9 +480,10 @@ func NewScheduledTask(name string, description string, cron string, task func())
 }
 
 type Cmd struct {
-	NAME  string
-	DESC  string
-	SOLVE func(args []string, msg MessageEventInfo)
+	Name  string
+	Desc  string
+	Solve func(args []string, msg MessageEventInfo)
+	Rule  string
 }
 
 type MessageEventInfo struct {

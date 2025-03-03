@@ -21,7 +21,7 @@ func (app *AppInfo) Run(cmd string, args []string, msg wba.MessageEventInfo) err
 	if !ok {
 		return errors.New("cmd not found")
 	}
-	app.CmdMap[cmd].SOLVE(args, msg)
+	app.CmdMap[cmd].Solve(args, msg)
 	return nil
 }
 
@@ -39,9 +39,9 @@ func (app *AppInfo) GetCmd() map[string]wba.Cmd {
 
 func NewCmd(name string, help string, solve func(args []string, msg wba.MessageEventInfo)) wba.Cmd {
 	return wba.Cmd{
-		NAME:  name,
-		DESC:  help,
-		SOLVE: solve,
+		Name:  name,
+		Desc:  help,
+		Solve: solve,
 	}
 }
 
