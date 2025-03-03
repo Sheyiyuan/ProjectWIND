@@ -206,7 +206,7 @@ func loadData(db *Database) error {
 
 var DB *Database
 
-func dataSet(datamap string, unit string, id string, key string, value interface{}, allowed bool) {
+func dataSet(datamap string, unit string, id string, key string, value interface{}, isAllowed bool, isMaster bool) {
 	// 修改数据
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
@@ -214,7 +214,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		DB.addDatamap(datamap)
 		dm = DB.Datamaps[datamap]
 	}
-	if !allowed && dm.Permission != "private" {
+	if !isAllowed && !isMaster && dm.Permission != "private" {
+		LOG.Warn("[Warning]:Permission denied")
+		return
+	}
+	if !isMaster && dm.Permission == "master" {
 		LOG.Warn("[Warning]:Permission denied")
 		return
 	}
@@ -325,13 +329,17 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	}
 }
 
-func dataGet(datamap string, unit string, id string, key string, allowed bool) (interface{}, bool) {
+func dataGet(datamap string, unit string, id string, key string, isAllowed bool, isMaster bool) (interface{}, bool) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
 		LOG.Warn("[Warning]:Datamap %s not found", datamap)
 		return "", false
 	}
-	if !allowed && dm.Permission != "private" {
+	if !isAllowed && !isMaster && dm.Permission != "private" {
+		LOG.Warn("[Warning]:Permission denied")
+		return "", false
+	}
+	if !isMaster && dm.Permission == "master" {
 		LOG.Warn("[Warning]:Permission denied")
 		return "", false
 	}
@@ -475,9 +483,36 @@ func Start() {
 
 func CreatePublicDatamap(id string) {
 	// 创建公开数据表
-	db := newDatamap(id)
-	db.Permission = "public"
-	DB.Datamaps[id] = db
+	db, ok := DB.Datamaps[id]
+	if !ok {
+		db = newDatamap(id)
+		db.Permission = "public"
+		DB.Datamaps[id] = db
+	} else {
+		LOG.Info("[Info]:Datamap %s already exists", id)
+	}
+}
+
+func CreateMasterDatamap(id string) {
+	// 创建核心数据表
+	db, ok := DB.Datamaps[id]
+	if !ok {
+		db = newDatamap(id)
+		db.Permission = "master"
+		DB.Datamaps[id] = db
+	} else {
+		LOG.Info("[Info]:Datamap %s already exists", id)
+	}
+}
+
+// 修改数据（核心）
+func MasterSet(datamap string, unit string, id string, key string, value interface{}) {
+	dataSet(datamap, unit, id, key, value, true, true)
+}
+
+// 查询数据（核心）
+func MasterGet(datamap string, unit string, id string, key string) (interface{}, bool) {
+	return dataGet(datamap, unit, id, key, true, true)
 }
 
 func Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
@@ -497,19 +532,19 @@ func Get(appName string, datamap string, unit string, id string, key string, isG
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", false)
+			dataSet(appName, "config", "hash", "", "", false, false)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", false)
+		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
 		if !ok {
 			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
 		if hash != datahash {
 			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
-			return dataGet(appName, unit, id, key, false)
+			return dataGet(appName, unit, id, key, false, false)
 		}
 
 	}
-	return dataGet(appName, unit, id, key, true)
+	return dataGet(appName, unit, id, key, true, true)
 }
 
 func Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
@@ -524,18 +559,18 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", false)
+			dataSet(appName, "config", "hash", "", "", false, false)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", false)
+		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
 		if !ok {
 			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
 		if hash != datahash {
 			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
-			dataSet(appName, unit, id, key, value, false)
+			dataSet(appName, unit, id, key, value, false, false)
 		}
 	}
-	dataSet(appName, unit, id, key, value, true)
+	dataSet(appName, unit, id, key, value, true, false)
 }
 
 // func VarSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
