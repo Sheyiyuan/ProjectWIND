@@ -206,7 +206,7 @@ func loadData(db *Database) error {
 
 var DB *Database
 
-func dataSet(datamap string, unit string, id string, key string, value interface{}, allowed bool, master bool) {
+func dataSet(datamap string, unit string, id string, key string, value interface{}, isAllowed bool, isMaster bool) {
 	// 修改数据
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
@@ -214,11 +214,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		DB.addDatamap(datamap)
 		dm = DB.Datamaps[datamap]
 	}
-	if dm.Permission == "private" && !allowed && !master {
+	if !isAllowed && !isMaster && dm.Permission != "private" {
 		LOG.Warn("[Warning]:Permission denied")
 		return
 	}
-	if dm.Permission == "master" && !master { 
+	if !isMaster && dm.Permission == "master" {
 		LOG.Warn("[Warning]:Permission denied")
 		return
 	}
@@ -329,17 +329,17 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	}
 }
 
-func dataGet(datamap string, unit string, id string, key string, allowed bool, master bool) (interface{}, bool) {
+func dataGet(datamap string, unit string, id string, key string, isAllowed bool, isMaster bool) (interface{}, bool) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
 		LOG.Warn("[Warning]:Datamap %s not found", datamap)
 		return "", false
 	}
-	if dm.Permission != "public" && !allowed && !master {
+	if !isAllowed && !isMaster && dm.Permission != "private" {
 		LOG.Warn("[Warning]:Permission denied")
 		return "", false
 	}
-	if dm.Permission == "master" && !master { 
+	if !isMaster && dm.Permission == "master" {
 		LOG.Warn("[Warning]:Permission denied")
 		return "", false
 	}
@@ -483,23 +483,36 @@ func Start() {
 
 func CreatePublicDatamap(id string) {
 	// 创建公开数据表
-	db := newDatamap(id)
-	db.Permission = "public"
-	DB.Datamaps[id] = db
+	db, ok := DB.Datamaps[id]
+	if !ok {
+		db = newDatamap(id)
+		db.Permission = "public"
+		DB.Datamaps[id] = db
+	} else {
+		LOG.Info("[Info]:Datamap %s already exists", id)
+	}
 }
 
 func CreateMasterDatamap(id string) {
-	db := newDatamap(id)
-	db.Permission = "master"
-	DB.Datamaps[id] = db
+	// 创建核心数据表
+	db, ok := DB.Datamaps[id]
+	if !ok {
+		db = newDatamap(id)
+		db.Permission = "master"
+		DB.Datamaps[id] = db
+	} else {
+		LOG.Info("[Info]:Datamap %s already exists", id)
+	}
 }
 
-func MasterGet(datamap string, unit string, id string, key string) (interface{}, bool) {
-	return dataGet(datamap, unit, id, key, true, true)
-}
-
+// 修改数据（核心）
 func MasterSet(datamap string, unit string, id string, key string, value interface{}) {
 	dataSet(datamap, unit, id, key, value, true, true)
+}
+
+// 查询数据（核心）
+func MasterGet(datamap string, unit string, id string, key string) (interface{}, bool) {
+	return dataGet(datamap, unit, id, key, true, true)
 }
 
 func Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
@@ -531,7 +544,7 @@ func Get(appName string, datamap string, unit string, id string, key string, isG
 		}
 
 	}
-	return dataGet(appName, unit, id, key, true, false)
+	return dataGet(appName, unit, id, key, true, true)
 }
 
 func Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
@@ -546,7 +559,7 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", true, true)
+			dataSet(appName, "config", "hash", "", "", false, false)
 		}
 		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
 		if !ok {
