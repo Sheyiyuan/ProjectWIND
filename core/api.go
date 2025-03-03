@@ -2,6 +2,7 @@ package core
 
 import (
 	"ProjectWIND/LOG"
+	"ProjectWIND/database"
 	"ProjectWIND/wba"
 	"crypto/rand"
 	"fmt"
@@ -818,7 +819,133 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 }
 
 //database模块
-//数据库部分允许字符串变量的读写操作，允许获取配置项操作
+// //数据库部分允许字符串变量的读写操作，允许读取配置项操作
+
+type databaseInfo struct {}
+
+func (dbi *databaseInfo) varSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
+	database.Set(app.Name, datamap, unit, id, key, value)
+}
+
+func (dbi *databaseInfo) SetUserVariable(app wba.AppInfo, id string, key string, value string) {
+	dbi.varSet(app, app.Name, "user", id, key, value)
+}
+
+func (dbi *databaseInfo) SetGroupVariable(app wba.AppInfo, id string, key string, value string) {
+	dbi.varSet(app, app.Name, "group", id, key, value)
+}
+
+func (dbi *databaseInfo) SetGlobalVariable(app wba.AppInfo, id string, key string, value string) {
+	dbi.varSet(app, app.Name, "global", id, key, value)
+}
+
+func (dbi *databaseInfo) SetOutUserVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+	dbi.varSet(app, datamap, "user", id, key, value)
+}
+
+func (dbi *databaseInfo) SetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+	dbi.varSet(app, datamap, "group", id, key, value)
+}
+
+func (dbi *databaseInfo) SetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+	dbi.varSet(app, datamap, "global", id, key, value)
+}
+
+func (dbi *databaseInfo) varGet(app wba.AppInfo, datamap string, unit string, id string, key string) (string, bool) {
+	res, ok := database.Get(app.Name, datamap, unit, id, key, false)
+	if !ok {
+		return "", false
+	}
+	resStr, ok := res.(string)
+	if !ok {
+		return "", false
+	}
+	return resStr, true
+}
+
+func (dbi *databaseInfo) GetUserVariable(app wba.AppInfo, id string, key string) (string, bool) {
+	return dbi.varGet(app, app.Name, "user", id, key)
+}
+
+func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, id string, key string) (string, bool) {
+	return dbi.varGet(app, app.Name, "group", id, key)
+}
+
+func (dbi *databaseInfo) GetGlobalVariable(app wba.AppInfo, id string, key string) (string, bool) {
+	return dbi.varGet(app, app.Name, "global", id, key)
+}
+
+func (dbi *databaseInfo) GetOutUserVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+	return dbi.varGet(app, datamap, "user", id, key)
+}
+
+func (dbi *databaseInfo) GetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+	return dbi.varGet(app, datamap, "group", id, key)
+}
+
+func (dbi *databaseInfo) GetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+	return dbi.varGet(app, datamap, "global", id, key)
+}
+
+func (dbi *databaseInfo) GetIntConfig(app wba.AppInfo, datamap string, key string) (int64, bool) {
+	res, ok := database.Get(app.Name, datamap, "config", "number", key, true)
+	if !ok {
+		return 0, false
+	}
+	resInt, ok := res.(int64)
+	if !ok {
+		return 0, false
+	}
+	return resInt, true
+}
+
+func (dbi *databaseInfo) GetStringConfig(app wba.AppInfo, datamap string, key string) (string, bool) {
+	res, ok := database.Get(app.Name, datamap, "config", "string", key, true)
+	if !ok {
+		return "", false
+	}
+	resStr, ok := res.(string)
+	if !ok {
+		return "", false
+	}
+	return resStr, true
+}
+
+func (dbi *databaseInfo) GetFloatConfig(app wba.AppInfo, datamap string, key string) (float64, bool) {
+	res, ok := database.Get(app.Name, datamap, "config", "float", key, true)
+	if !ok {
+		return 0, false
+	}
+	resFloat, ok := res.(float64)
+	if !ok {
+		return 0, false
+	}
+	return resFloat, true
+}
+
+func (dbi *databaseInfo) GetIntSliceConfig(app wba.AppInfo, datamap string, key string) ([]int64, bool) {
+	res, ok := database.Get(app.Name, datamap, "config", "number_slice", key, true)
+	if !ok {
+		return nil, false
+	}
+	resSlice, ok := res.([]int64)
+	if !ok {
+		return nil, false
+	}
+	return resSlice, true
+}
+
+func (dbi *databaseInfo) GetStringSliceConfig(app wba.AppInfo, datamap string, key string) ([]string, bool) {
+	res, ok := database.Get(app.Name, datamap, "config", "string_slice", key, true)
+	if !ok {
+		return nil, false
+	}
+	resSlice, ok := res.([]string)
+	if !ok {
+		return nil, false
+	}
+	return resSlice, true
+}
 
 // 文件管理模块
 //TODO: 文件管理模块待实现
@@ -829,6 +956,7 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 //核心信息调用模块
 
 var AppApi apiInfo
+var DatabaseApi databaseInfo
 
 func GenerateUUID() (string, error) {
 	uuid := make([]byte, 16)

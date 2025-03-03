@@ -560,16 +560,6 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 	dataSet(appName, unit, id, key, value, true, false)
 }
 
-type DatabaseHandlerImpl struct{}
-
-func (dbh *DatabaseHandlerImpl) Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
-	Set(appName, datamap, unit, id, key, value)
-}
-
-func (dbh *DatabaseHandlerImpl) Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
-	return Get(appName, datamap, unit, id, key, isGettingConfig)
-}
-
 // func VarSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
 // 	Set(app.Name, datamap, unit, id, key, value)
 // }

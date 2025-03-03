@@ -87,16 +87,16 @@ func checkAndUpdateConfig(configPath string) error {
 	var coreConfig typed.CoreConfigInfo
 
 	var defaultProtocol typed.Protocol
-	defaultProtocol.ProtocolName = "EXAMPLE"
-	defaultProtocol.ProtocolPlatform = "在这里输入协议平台"
-	defaultProtocol.ProtocolAddr = "在这里输入协议地址，如'ws://127.0.0.1:8080'"
+	defaultProtocol.Name = "EXAMPLE"
+	defaultProtocol.Platform = "在这里输入协议平台"
+	defaultProtocol.Addr = "在这里输入协议地址，如'ws://127.0.0.1:8080'"
 	defaultProtocol.Token = "在这里输入协议的Token"
 	defaultProtocol.Enable = true
 
 	var defaultConfig typed.CoreConfigInfo
 	defaultConfig.CoreName = "windCore"
 	defaultConfig.WebUIPort = 3211
-	defaultConfig.Protocols = []typed.Protocol{defaultProtocol}
+	defaultConfig.Protocol = defaultProtocol
 	defaultConfig.ServiceName = "wind"
 	// 读取配置文件
 	file, err := os.Open(configPath)
@@ -120,11 +120,8 @@ func checkAndUpdateConfig(configPath string) error {
 	}
 
 	// 检查并更新配置
-	//if coreConfig.ProtocolAddr == "" {
-	//	coreConfig.ProtocolAddr = defaultConfig.ProtocolAddr
-	//}
-	if coreConfig.Protocols == nil || len(coreConfig.Protocols) == 0 {
-		coreConfig.Protocols = defaultConfig.Protocols
+	if coreConfig.Protocol == (typed.Protocol{}) {
+		coreConfig.Protocol = defaultConfig.Protocol
 	}
 	if coreConfig.WebUIPort == 0 {
 		coreConfig.WebUIPort = defaultConfig.WebUIPort
@@ -311,44 +308,30 @@ func startProtocol() {
 		LOG.Fatal("连接协议时，解析配置文件 ./data/core.json 失败: %v", err)
 	}
 	LOG.Info("正在启动WebSocket链接程序...")
-	protocolNum := 0
-	breakNum := 0
-	UnenableProtocolNum := 0
-	for _, protocol := range config.Protocols {
-		protocolName := protocol.ProtocolName
-		if protocolName == "EXAMPLE" {
-			continue
-		}
-		if protocolName == "" {
-			LOG.Warn("连接协议 %s 时，协议名称为空，跳过该协议", protocolName)
-			breakNum++
-			continue
-		}
-		//获取协议地址
-		protocolAddr := protocol.ProtocolAddr
-		if protocolAddr == "" {
-			LOG.Warn("连接协议 %s 时，协议地址为空，跳过该协议", protocolName)
-			breakNum++
-			continue
-		}
-		if protocol.Enable == false {
-			LOG.Warn("连接协议 %s 时，协议已禁用，跳过该协议", protocolName)
-			UnenableProtocolNum++
-			continue
-		}
-		//获取token
-		token := protocol.Token
-		// 启动 WebSocket 处理程序
-		go func() {
-			err := core.WebSocketHandler(protocolAddr, token)
-			if err != nil {
-				LOG.Error("连接协议时，启动 WebSocket 处理程序失败: %v", err)
-			}
-		}()
-		protocolNum++
+	protocol := config.Protocol
+	if protocol.Name == "EXAMPLE" {
+		LOG.Warn("未找到协议配置信息")
+		return
 	}
-	LOG.Info(" %d 个协议服务启动完成, %d 个协议服务已禁用, %d 个协议服务因为配置错误被跳过。", protocolNum, UnenableProtocolNum, breakNum)
-	select {}
+	if protocol.Name == "" {
+		LOG.Warn("连接协议 %s 时，协议名称为空", protocol.Name)
+		return
+	}
+	//获取协议地址
+	protocolAddr := protocol.Addr
+	if protocolAddr == "" {
+		LOG.Warn("连接协议 %s 时，协议地址为空", protocol.Name)
+		return
+	}
+	if protocol.Enable == false {
+		LOG.Warn("连接协议 %s 时，协议已禁用", protocol.Name)
+		return
+	}
+	// 启动 WebSocket 处理程序
+	err = core.WebSocketHandler(protocol)
+	if err != nil {
+		LOG.Error("连接协议时 %s，启动 WebSocket 处理程序失败: %v", protocol.Name, err)
+	}
 }
 
 func ReloadApps() {
@@ -360,30 +343,5 @@ func ReloadApps() {
 func startDatabase() {
 	go database.Start()
 	time.Sleep(time.Second * 1)
-	// 读写测试
-	// for i := 0; i < 10; i++ {
-	// 	data, ok := database.Get("user", "test", "test"+fmt.Sprintf("%d", i))
-	// 	if !ok {
-	// 		LOG.Error("Failed to get data from database")
-	// 		continue
-	// 	}
-	// 	LOG.Info("Get data from database: %v", data)
-	// 	time.Sleep(time.Second * 1)
-	// }
-	// time.Sleep(time.Second * 1)
-	// for i := 0; i < 10; i++ {
-	// 	database.Set("user", "test", "test"+fmt.Sprintf("%d", i), "test"+fmt.Sprintf("%d", 1000+i))
-	// 	time.Sleep(time.Second * 1)
-	// }
-	// time.Sleep(time.Second * 1)
-	// for i := 0; i < 10; i++ {
-	// 	data, ok := database.Get("user", "test", "test"+fmt.Sprintf("%d", i))
-	// 	if !ok {
-	// 		LOG.Error("Failed to get data from database")
-	// 		continue
-	// 	}
-	// 	LOG.Info("Get data from database: %v", data)
-	// 	time.Sleep(time.Second * 1)
-	// }
 	select {}
 }

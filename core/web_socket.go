@@ -2,6 +2,7 @@ package core
 
 import (
 	"ProjectWIND/LOG"
+	"ProjectWIND/typed"
 	"ProjectWIND/wba"
 	"encoding/json"
 	"fmt"
@@ -10,16 +11,14 @@ import (
 	"net/url"
 )
 
-var gProtocolAddr string
-var gToken string
+var gProtocol typed.Protocol
 
 // WebSocketHandler 接收WebSocket连接处的消息并处理
-func WebSocketHandler(protocolAddr string, token string) error {
+func WebSocketHandler(protocol typed.Protocol) error {
 	// 保存全局变量
-	gProtocolAddr = protocolAddr
-	gToken = token
+	gProtocol = protocol
 	// 解析连接URL
-	u, err := url.Parse(protocolAddr)
+	u, err := url.Parse(protocol.Addr)
 	if err != nil {
 		LOG.Error("Parse URL error: %v", err)
 		return err
@@ -30,7 +29,7 @@ func WebSocketHandler(protocolAddr string, token string) error {
 	if err != nil {
 		LOG.Fatal("创建请求出错:%v", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Authorization", "Bearer "+protocol.Token)
 	// 配置WebSocket连接升级器
 	dialer := websocket.DefaultDialer
 	// 使用升级器建立WebSocket连接
@@ -126,7 +125,7 @@ func wsAPI(body wba.APIRequestInfo) (Response wba.APIResponseInfo, err error) {
 		return wba.APIResponseInfo{}, err
 	}
 	// 解析连接URL
-	u, err := url.Parse(gProtocolAddr)
+	u, err := url.Parse(gProtocol.Addr)
 	if err != nil {
 		LOG.Error("Parse URL error: %v", err)
 		return wba.APIResponseInfo{}, err
@@ -136,7 +135,7 @@ func wsAPI(body wba.APIRequestInfo) (Response wba.APIResponseInfo, err error) {
 	if err != nil {
 		LOG.Fatal("创建请求出错:%v", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+gToken)
+	req.Header.Set("Authorization", "Bearer "+gProtocol.Token)
 	// 配置WebSocket连接升级器
 	dialer := websocket.DefaultDialer
 	// 使用升级器建立WebSocket连接

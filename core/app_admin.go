@@ -1,21 +1,22 @@
-//go:build windows
-// +build windows
-
 package core
 
 import (
 	"ProjectWIND/LOG"
+	"ProjectWIND/typed"
 	"ProjectWIND/wba"
-	"fmt"
+	"github.com/dop251/goja"
 	"os"
 	"path/filepath"
-	"syscall"
-	"unsafe"
+	"strings"
 )
 
-var CmdMap = make(map[string]wba.Cmd)
+var CmdMap = make([]map[string]wba.Cmd, 4)
+var AppMap = make(map[typed.AppKey]wba.AppInfo)
 
 func ReloadApps() (total int, success int) {
+	// 清空AppMap和CmdMap
+	CmdMap = make([]map[string]wba.Cmd, 4)
+	AppMap = make(map[typed.AppKey]wba.AppInfo)
 	appsDir := "./data/app/"
 	appFiles, err := os.ReadDir(appsDir)
 	total = 0
@@ -30,7 +31,7 @@ func ReloadApps() (total int, success int) {
 		total += totalDelta
 		success += successDelta
 	}
-	CmdMap = mergeMaps(CmdMap, AppCore.CmdMap)
+	CmdMap[0] = AppCore.CmdMap
 	return total, success
 }
 
@@ -38,44 +39,8 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 	if file.IsDir() {
 		return 0, 0
 	}
+
 	ext := filepath.Ext(file.Name())
-	if ext == ".dll" {
-		pluginPath := filepath.Join(appsDir, file.Name())
-		lib, err := syscall.LoadLibrary(pluginPath)
-		if err != nil {
-			LOG.Error("加载应用 %s 失败: %v", pluginPath, err)
-			return 1, 0
-		}
-		defer func(handle syscall.Handle) {
-			err := syscall.FreeLibrary(handle)
-			if err != nil {
-				LOG.Error("释放应用 %s 时发生错误: %v", pluginPath, err)
-			}
-		}(lib)
-
-		// 获取函数地址
-		sym, err := syscall.GetProcAddress(lib, "AppInit")
-		if err != nil {
-			fmt.Println("找不到应用 %s 提供的 AppInit 接口: %v", err)
-			return 1, 0
-		}
-
-		// 定义函数类型
-		AppInitPtr := (*func() wba.AppInfo)(unsafe.Pointer(&sym))
-		AppInit := *AppInitPtr
-
-		app := AppInit()
-
-		err = app.Init(&AppApi)
-		if err != nil {
-			LOG.Error("初始化应用 %s 失败: %v", pluginPath, err)
-		}
-
-		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
-		LOG.Info("应用 %s 加载成功", pluginPath)
-		return 1, 1
-
-	}
 	if ext == ".js" {
 		pluginPath := filepath.Join(appsDir, file.Name())
 		jsCode, err := os.ReadFile(pluginPath)
@@ -94,10 +59,9 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		// 创建JS可用的wbaObj对象
 		wbaObj := runtime.NewObject()
 		wsp := runtime.NewObject()
+		wsd := runtime.NewObject()
 		_ = runtime.Set("wba", wbaObj)
 		_ = wbaObj.Set("NewApp", wba.NewApp)
-		_ = wbaObj.Set("NewCmd", wba.NewCmd)
-		_ = wbaObj.Set("NewScheduledTask", wba.NewScheduledTask)
 		_ = wbaObj.Set("WithName", wba.WithName)
 		_ = wbaObj.Set("WithAuthor", wba.WithAuthor)
 		_ = wbaObj.Set("WithVersion", wba.WithVersion)
@@ -106,7 +70,8 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wbaObj.Set("WithLicense", wba.WithLicense)
 		_ = wbaObj.Set("WithAppType", wba.WithAppType)
 		_ = wbaObj.Set("WithRule", wba.WithRule)
-		_ = wbaObj.Set("WSP", wsp)
+		_ = wbaObj.Set("wsp", wsp)
+		_ = wbaObj.Set("wsd", wsd)
 		_ = wsp.Set("UnsafelySendMsg", AppApi.UnsafelySendMsg)
 		_ = wsp.Set("UnsafelySendPrivateMsg", AppApi.UnsafelySendPrivateMsg)
 		_ = wsp.Set("UnsafelySendGroupMsg", AppApi.UnsafelySendGroupMsg)
@@ -149,6 +114,23 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wsp.Set("CleanCache", AppApi.CleanCache)
 		_ = wsp.Set("GetLoginInfo", AppApi.LogWith)
 		_ = wsp.Set("GetVersionInfo", AppApi.GetVersionInfo)
+		_ = wsd.Set("SetUserVariable", DatabaseApi.SetUserVariable)
+		_ = wsd.Set("SetGroupVariable", DatabaseApi.SetGroupVariable)
+		_ = wsd.Set("SetGlobalVariable", DatabaseApi.SetGlobalVariable)
+		_ = wsd.Set("SetOutUserVariable", DatabaseApi.SetOutUserVariable)
+		_ = wsd.Set("SetOutGroupVariable", DatabaseApi.SetOutGroupVariable)
+		_ = wsd.Set("SetOutGlobalVariable", DatabaseApi.SetOutGlobalVariable)
+		_ = wsd.Set("GetUserVariable", DatabaseApi.GetUserVariable)
+		_ = wsd.Set("GetGroupVariable", DatabaseApi.GetGroupVariable)
+		_ = wsd.Set("GetGlobalVariable", DatabaseApi.GetGlobalVariable)
+		_ = wsd.Set("GetOutUserVariable", DatabaseApi.GetOutUserVariable)
+		_ = wsd.Set("GetOutGroupVariable", DatabaseApi.GetOutGroupVariable)
+		_ = wsd.Set("GetOutGlobalVariable", DatabaseApi.GetOutGlobalVariable)
+		_ = wsd.Set("GetIntConfig", DatabaseApi.GetIntConfig)
+		_ = wsd.Set("GetFloatConfig", DatabaseApi.GetFloatConfig)
+		_ = wsd.Set("GetStringConfig", DatabaseApi.GetStringConfig)
+		_ = wsd.Set("GetIntSliceConfig", DatabaseApi.GetIntSliceConfig)
+		_ = wsd.Set("GetStringSliceConfig", DatabaseApi.GetStringSliceConfig)
 
 		// 获取AppInit函数
 		appInitVal := runtime.Get("AppInit")
@@ -204,8 +186,10 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			return 1, 0
 		}
 
+		AppMap[typed.AppKey{AppName: appInfo.Name, AppType: appInfo.AppType, AppVersion: appInfo.Version, AppLevel: checkAppLevel(appInfo)}] = appInfo
+		cmdIndex := AppTypeToInt(appInfo.AppType)
 		// 合并命令
-		CmdMap = mergeMaps(CmdMap, appInfo.CmdMap)
+		CmdMap[cmdIndex] = mergeMaps(CmdMap[cmdIndex], appInfo.CmdMap)
 
 		// 注册定时任务
 		for _, task := range appInfo.ScheduledTasks {
@@ -228,4 +212,20 @@ func mergeMaps(map1, map2 map[string]wba.Cmd) map[string]wba.Cmd {
 		map3[key] = value
 	}
 	return map3
+}
+
+func AppTypeToInt(appType string) int32 {
+	appType = strings.ToLower(appType)
+	switch appType {
+	case "system":
+		return 1
+	case "rule":
+		return 2
+	default:
+		return 3
+	}
+}
+
+func checkAppLevel(appInfo wba.AppInfo) int32 {
+	return 0
 }

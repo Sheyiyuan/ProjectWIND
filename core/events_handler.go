@@ -16,13 +16,16 @@ func HandleMessage(msgJson []byte) {
 	}
 	// 处理消息
 	LOG.Info("收到消息:(来自：%v-%v:%v-%v)%v", msg.MessageType, msg.GroupId, msg.UserId, msg.Sender.Nickname, msg.RawMessage)
-	//如果消息文本内容为bot，发送框架信息。
 	cmd, args := CmdSplit(msg)
-	_, ok := CmdMap[cmd]
-	if ok {
-		LOG.Debug("执行命令：%v %v", cmd, args)
-		CmdMap[cmd].SOLVE(args, msg)
+	for _, cmdList := range CmdMap {
+		_, ok := cmdList[cmd]
+		if ok {
+			LOG.Debug("执行命令：%v %v", cmd, args)
+			cmdList[cmd].Solve(args, msg)
+			break
+		}
 	}
+
 	// TODO: 处理消息内容
 }
 
@@ -62,15 +65,17 @@ func CmdSplit(msg wba.MessageEventInfo) (string, []string) {
 			return "", []string{}
 		}
 	}
-	//检查有无application.CmdList中的命令前缀
+	//检查有无application.CmdMap中的命令前缀
 	for _, prefix := range cmdPrefix {
 		if strings.HasPrefix(text, prefix) {
 			text = strings.TrimPrefix(text, prefix)
-			for cmd := range CmdMap {
-				if strings.HasPrefix(text, cmd) {
-					text = strings.TrimPrefix(text, cmd)
-					text = strings.TrimPrefix(text, " ")
-					return cmd, strings.Split(text, " ")
+			for cmdList := range CmdMap {
+				for cmd := range CmdMap[cmdList] {
+					if strings.HasPrefix(text, cmd) {
+						text = strings.TrimPrefix(text, cmd)
+						text = strings.TrimPrefix(text, " ")
+						return cmd, strings.Split(text, " ")
+					}
 				}
 			}
 		}
