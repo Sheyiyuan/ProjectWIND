@@ -29,6 +29,10 @@ func (app *AppInfo) Init(Api wba.WindStandardProtocolAPI) error {
 	return nil
 }
 
+func (app *AppInfo) InitWSD(Api wba.WindStandardDataBaseAPI) error {
+	return nil
+}
+
 func (app *AppInfo) GetCmd() map[string]wba.Cmd {
 	return app.CmdMap
 }

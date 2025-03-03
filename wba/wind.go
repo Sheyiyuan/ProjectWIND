@@ -7,6 +7,7 @@ import (
 type APP interface {
 	Get() AppInfo
 	Init(api WindStandardProtocolAPI) error
+	InitWSD(api WindStandardDataBaseAPI) error
 }
 
 // WindStandardProtocolAPI Wind标准协议API,提供了onebot11标准中的API接口。
@@ -265,9 +266,84 @@ type WindStandardProtocolAPI interface {
 	Log(log string, args ...interface{})
 }
 
-type DataBaseHandler interface {
-	Set(appName string, dataMap string, unit string, id string, key string, value interface{})
-	Get(appName string, dataMap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool)
+type WindStandardDataBaseAPI interface {
+	// SetUserVariable 设置用户变量
+	// SetGroupVariable 设置群组变量
+	// SetGlobalVariable 设置全局变量
+	// SetOutUserVarialbe 设置其他数据库中的用户变量（需要权限）
+	// SetOutGroupVarialbe 设置其他数据库中的群组变量（需要权限）
+	// SetOutGlobalVarialbe 设置其他数据库中的全局变量（需要权限）
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - value: 变量值。
+	// - datamap: 数据表名称。
+	SetUserVariable(app AppInfo, id string, key string, value string)
+	SetGroupVariable(app AppInfo, id string, key string, value string)
+	SetGlobalVariable(app AppInfo, id string, key string, value string)
+	SetOutUserVariable(app AppInfo, datamap string, id string, key string, value string)
+	SetOutGroupVariable(app AppInfo, datamap string, id string, key string, value string)
+	SetOutGlobalVariable(app AppInfo, datamap string, id string, key string, value string)
+
+	// GetUserVariable 获取用户变量
+	// GetGroupVariable 获取群组变量
+	// GetGlobalVariable 获取全局变量
+	// GetOutUserVariable 获取其他数据库中的用户变量（需要权限）
+	// GetOutGroupVariable 获取其他数据库中的群组变量（需要权限）
+	// GetOutGlobalVariable 获取其他数据库中的全局变量（需要权限）
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - datamap：数据表名称。
+	// 返回: 变量值，是否存在。
+	GetUserVariable(app AppInfo, id string, key string) (string, bool)
+	GetGroupVariable(app AppInfo, id string, key string) (string, bool)
+	GetGlobalVariable(app AppInfo, id string, key string) (string, bool)
+	GetOutUserVariable(app AppInfo, datamap string, id string, key string) (string, bool)
+	GetOutGroupVariable(app AppInfo, datamap string, id string, key string) (string, bool)
+	GetOutGlobalVariable(app AppInfo, datamap string, id string, key string) (string, bool)
+
+	// GetIntConfig 获取指定数据单元的整数型配置。
+	// 参数:
+	// - app: 应用信息。
+	// - datamap: 数据单元名称。
+	// - key: 配置名称。
+	// 返回: 配置值，是否存在。
+	GetIntConfig(app AppInfo, datamap string, key string) (int64, bool)
+
+	// GetStringConfig 获取指定数据单元的字符串型配置。
+	// 参数:
+	// - app: 应用信息。
+	// - datamap: 数据单元名称。
+	// - key: 配置名称。
+	// 返回: 配置值，是否存在。
+	GetStringConfig(app AppInfo, datamap string, key string) (string, bool)
+
+	// GetFloatConfig 获取指定数据单元的浮点型配置。
+	// 参数:
+	// - app: 应用信息。
+	// - datamap: 数据单元名称。
+	// - key: 配置名称。
+	// 返回: 配置值，是否存在。
+	GetFloatConfig(app AppInfo, datamap string, key string) (float64, bool)
+
+	// GetIntSliceConfig 获取指定数据单元的整数型切片配置。
+	// 参数:
+	// - app: 应用信息。
+	// - datamap: 数据单元名称。
+	// - key: 配置名称。
+	// 返回: 配置值，是否存在。
+	GetIntSliceConfig(app AppInfo, datamap string, key string) ([]int64, bool)
+
+	// GetStringSliceConfig 获取指定数据单元的字符串型切片配置。
+	// 参数:
+	// - app: 应用信息。
+	// - datamap: 数据单元名称。
+	// - key: 配置名称。
+	// 返回: 配置值，是否存在。
+	GetStringSliceConfig(app AppInfo, datamap string, key string) ([]string, bool)
 }
 
 type AppInfo struct {
@@ -287,7 +363,6 @@ type AppInfo struct {
 	MetaEventHandler    func(msg MetaEventInfo)
 	ScheduledTasks      map[string]ScheduledTaskInfo
 	API                 map[string]interface{}
-	DbHandler           DataBaseHandler
 }
 
 func (ai AppInfo) Get() AppInfo {
@@ -296,6 +371,11 @@ func (ai AppInfo) Get() AppInfo {
 
 func (ai *AppInfo) Init(api WindStandardProtocolAPI) error {
 	WSP = api
+	return nil
+}
+
+func (ai *AppInfo) InitWSD(api WindStandardDataBaseAPI) error {
+	WSD = api
 	return nil
 }
 
@@ -309,108 +389,6 @@ func (ai *AppInfo) AddNoticeEventHandler(ScheduledTask ScheduledTaskInfo) {
 
 func (ai *AppInfo) AddScheduledTask(task ScheduledTaskInfo) {
 	ai.ScheduledTasks[task.Name] = task
-}
-
-func (ai *AppInfo) VarSet(dataMap string, unit string, id string, key string, value string) {
-	if ai.DbHandler != nil {
-		ai.DbHandler.Set(ai.Name, dataMap, unit, id, key, value)
-	}
-}
-
-// VarGet 获取变量
-func (ai *AppInfo) VarGet(dataMap string, unit string, id string, key string) (string, bool) {
-	if ai.DbHandler != nil {
-		res, ok := ai.DbHandler.Get(ai.Name, dataMap, unit, id, key, false)
-		if !ok {
-			return "", false
-		}
-		resStr, ok := res.(string)
-		if !ok {
-			return "", false
-		}
-		return resStr, true
-	}
-	return "", false
-}
-
-// GetIntConfig 获取整数配置
-func (ai *AppInfo) GetIntConfig(dataMap string, key string) (int64, bool) {
-	if ai.DbHandler != nil {
-		res, ok := ai.DbHandler.Get(ai.Name, dataMap, "config", "number", key, true)
-		if !ok {
-			return 0, false
-		}
-		resInt, ok := res.(int64)
-		if !ok {
-			return 0, false
-		}
-		return resInt, true
-	}
-	return 0, false
-}
-
-// GetStringConfig 获取字符串配置
-func (ai *AppInfo) GetStringConfig(dataMap string, key string) (string, bool) {
-	if ai.DbHandler != nil {
-		res, ok := ai.DbHandler.Get(ai.Name, dataMap, "config", "string", key, true)
-		if !ok {
-			return "", false
-		}
-		resStr, ok := res.(string)
-		if !ok {
-			return "", false
-		}
-		return resStr, true
-	}
-	return "", false
-}
-
-// GetFloatConfig 获取浮点数配置
-func (ai *AppInfo) GetFloatConfig(dataMap string, key string) (float64, bool) {
-	if ai.DbHandler != nil {
-		res, ok := ai.DbHandler.Get(ai.Name, dataMap, "config", "float", key, true)
-		if !ok {
-			return 0, false
-		}
-		resFloat, ok := res.(float64)
-		if !ok {
-			return 0, false
-		}
-		return resFloat, true
-	}
-	return 0, false
-}
-
-// GetIntSliceConfig 获取整数切片配置
-func (ai *AppInfo) GetIntSliceConfig(dataMap string, key string) ([]int64, bool) {
-	if ai.DbHandler != nil {
-		res, ok := ai.DbHandler.Get(ai.Name, dataMap, "config", "number_slice", key, true)
-		if !ok {
-			return nil, false
-		}
-		resSlice, ok := res.([]int64)
-		if !ok {
-			return nil, false
-		}
-		return resSlice, true
-	}
-	return nil, false
-}
-
-// GetStringSliceConfig 获取字符串切片配置
-func (ai *AppInfo) GetStringSliceConfig(dataMap string, key string) ([]string, bool) {
-	if ai.DbHandler != nil {
-		res, ok := ai.DbHandler.Get(ai.Name, dataMap, "config", "string_slice", key, true)
-		if !ok {
-			return nil, false
-		}
-		resSlice, ok := res.([]string)
-		if !ok {
-			return nil, false
-		}
-		return resSlice, true
-	}
-	return nil, false
 }
 
 type AppInfoOption func(ei *AppInfo)
@@ -745,3 +723,4 @@ type ScheduledTaskInfo struct {
 }
 
 var WSP WindStandardProtocolAPI
+var WSD WindStandardDataBaseAPI

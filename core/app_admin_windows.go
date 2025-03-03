@@ -72,6 +72,11 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			LOG.Error("初始化应用 %s 失败: %v", pluginPath, err)
 		}
 
+		err = app.InitWSD(&DatabaseApi) 
+		if err != nil {
+			LOG.Error("初始化应用 %s 数据库失败: %v", pluginPath, err)
+		}
+
 		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
 		LOG.Info("应用 %s 加载成功", pluginPath)
 		return 1, 1
@@ -95,6 +100,7 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		// 创建JS可用的wbaObj对象
 		wbaObj := runtime.NewObject()
 		wsp := runtime.NewObject()
+		wsd := runtime.NewObject()
 		_ = runtime.Set("wba", wbaObj)
 		_ = wbaObj.Set("NewApp", wba.NewApp)
 		_ = wbaObj.Set("NewCmd", wba.NewCmd)
@@ -108,6 +114,7 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wbaObj.Set("WithAppType", wba.WithAppType)
 		_ = wbaObj.Set("WithRule", wba.WithRule)
 		_ = wbaObj.Set("WSP", wsp)
+		_ = wbaObj.Set("WSD", wsd)
 		_ = wsp.Set("UnsafelySendMsg", AppApi.UnsafelySendMsg)
 		_ = wsp.Set("UnsafelySendPrivateMsg", AppApi.UnsafelySendPrivateMsg)
 		_ = wsp.Set("UnsafelySendGroupMsg", AppApi.UnsafelySendGroupMsg)
@@ -150,6 +157,23 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wsp.Set("CleanCache", AppApi.CleanCache)
 		_ = wsp.Set("GetLoginInfo", AppApi.LogWith)
 		_ = wsp.Set("GetVersionInfo", AppApi.GetVersionInfo)
+		_ = wsd.Set("SetUserVariable", DatabaseApi.SetUserVariable)
+		_ = wsd.Set("SetGroupVariable", DatabaseApi.SetGroupVariable)
+		_ = wsd.Set("SetGlobalVariable", DatabaseApi.SetGlobalVariable)
+		_ = wsd.Set("SetOutUserVariable", DatabaseApi.SetOutUserVariable)
+		_ = wsd.Set("SetOutGroupVariable", DatabaseApi.SetOutGroupVariable)
+		_ = wsd.Set("SetOutGlobalVariable", DatabaseApi.SetOutGlobalVariable)
+		_ = wsd.Set("GetUserVariable", DatabaseApi.GetUserVariable)
+		_ = wsd.Set("GetGroupVariable", DatabaseApi.GetGroupVariable)
+		_ = wsd.Set("GetGlobalVariable", DatabaseApi.GetGlobalVariable)
+		_ = wsd.Set("GetOutUserVariable", DatabaseApi.GetOutUserVariable)
+		_ = wsd.Set("GetOutGroupVariable", DatabaseApi.GetOutGroupVariable)
+		_ = wsd.Set("GetOutGlobalVariable", DatabaseApi.GetOutGlobalVariable)
+		_ = wsd.Set("GetIntConfig", DatabaseApi.GetIntConfig)
+		_ = wsd.Set("GetFloatConfig", DatabaseApi.GetFloatConfig)
+		_ = wsd.Set("GetStringConfig", DatabaseApi.GetStringConfig)
+		_ = wsd.Set("GetIntSliceConfig", DatabaseApi.GetIntSliceConfig)
+		_ = wsd.Set("GetStringSliceConfig", DatabaseApi.GetStringSliceConfig)
 
 		// 获取AppInit函数
 		appInitVal := runtime.Get("AppInit")
