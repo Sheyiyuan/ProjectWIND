@@ -1,6 +1,3 @@
-//go:build linux || darwin
-// +build linux darwin
-
 package core
 
 import (
@@ -9,7 +6,6 @@ import (
 	"github.com/dop251/goja"
 	"os"
 	"path/filepath"
-	"plugin"
 )
 
 var CmdMap = make(map[string]wba.Cmd)
@@ -39,38 +35,6 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 	}
 
 	ext := filepath.Ext(file.Name())
-	if ext == ".so" {
-		pluginPath := filepath.Join(appsDir, file.Name())
-		p, err := plugin.Open(pluginPath)
-		if err != nil {
-			LOG.Error("打开应用 %s 时发生错误: %v", pluginPath, err)
-			return 1, 0
-		}
-		AppInit, err := p.Lookup("AppInit")
-		if err != nil {
-			LOG.Error("找不到应用 %s 提供的 AppInit 接口: %v", pluginPath, err)
-			return 1, 0
-		}
-		app := AppInit.(func() wba.AppInfo)()
-
-		err = app.Init(&AppApi)
-		if err != nil {
-			LOG.Error("初始化应用 %s 失败: %v", pluginPath, err)
-		}
-
-		err = app.InitWSD(&DatabaseApi)
-		if err != nil {
-			LOG.Error("初始化应用 %s 数据库失败: %v", pluginPath, err)
-		}
-
-		CmdMap = mergeMaps(CmdMap, app.Get().CmdMap)
-		ScheduledTasks := app.Get().ScheduledTasks
-		for _, task := range ScheduledTasks {
-			RegisterCron(app.Get().Name, task)
-		}
-		LOG.Info("应用 %s 加载成功", pluginPath)
-		return 1, 1
-	}
 	if ext == ".js" {
 		pluginPath := filepath.Join(appsDir, file.Name())
 		jsCode, err := os.ReadFile(pluginPath)
