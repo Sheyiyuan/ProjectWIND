@@ -22,3 +22,13 @@ type AppKey struct {
 	AppLevel   int32  `json:"app_level"`
 	AppVersion string `json:"app_version"`
 }
+
+type SessionWorkSpace struct {
+	SessionId   string          `json:"session_id"`
+	SessionType string          `json:"session_type"`
+	Rule        string          `json:"rule"`
+	Enable      bool            `json:"enable"`
+	AppEnable   map[AppKey]bool `json:"app_enable"`
+	CmdEnable   map[string]bool `json:"cmd_enable"`
+	WorkLevel   int32           `json:"work_level"`
+}
