@@ -268,42 +268,174 @@ type WindStandardProtocolAPI interface {
 
 type WindStandardDataBaseAPI interface {
 	// SetUserVariable 设置用户变量
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息事件信息。
+	// - key: 变量名称。
+	// - value: 变量值。
+	SetUserVariable(app AppInfo, msg MessageEventInfo, key string, value string)
+
 	// SetGroupVariable 设置群组变量
-	// SetGlobalVariable 设置全局变量
-	// SetOutUserVarialbe 设置其他数据库中的用户变量（需要权限）
-	// SetOutGroupVarialbe 设置其他数据库中的群组变量（需要权限）
-	// SetOutGlobalVarialbe 设置其他数据库中的全局变量（需要权限）
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息事件信息。
+	// - key: 变量名称。
+	// - value: 变量值。
+	SetGroupVariable(app AppInfo, msg MessageEventInfo, key string, value string)
+
+	// SetOutUserVarialbe [需要master权限]设置其他数据库中的用户变量
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息事件信息。
+	// - key: 变量名称。
+	// - value: 变量值。
+	// - datamap: 数据表名称。
+	SetOutUserVariable(app AppInfo, datamap string, msg MessageEventInfo, key string, value string)
+
+	// SetOutGroupVarialbe [需要master权限]设置其他数据库中的群组变量
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息事件信息。
+	// - key: 变量名称。
+	// - value: 变量值。
+	// - datamap: 数据表名称。
+	SetOutGroupVariable(app AppInfo, datamap string, msg MessageEventInfo, key string, value string)
+
+	// UnsafelySetUserVariable [不安全][需要master权限]设置用户变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - value: 变量值。
+	UnsafelySetUserVariable(app AppInfo, id string, key string, value string)
+
+	// UnsafelySetGroupVariable [不安全][需要master权限]设置群组变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - value: 变量值。
+	UnsafelySetGroupVariable(app AppInfo, id string, key string, value string)
+
+	// UnsafelySetGlobalVariable [不安全][需要master权限]设置全局变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - value: 变量值。
+	UnsafelySetGlobalVariable(app AppInfo, id string, key string, value string)
+
+	// 	UnsafelySetOutUserVariable [不安全][需要master权限]设置其他数据库中的用户变量
 	// 参数：
 	// - app: 应用信息。
 	// - id: 数据单元 ID。
 	// - key: 变量名称。
 	// - value: 变量值。
 	// - datamap: 数据表名称。
-	SetUserVariable(app AppInfo, id string, key string, value string)
-	SetGroupVariable(app AppInfo, id string, key string, value string)
-	SetGlobalVariable(app AppInfo, id string, key string, value string)
-	SetOutUserVariable(app AppInfo, datamap string, id string, key string, value string)
-	SetOutGroupVariable(app AppInfo, datamap string, id string, key string, value string)
-	SetOutGlobalVariable(app AppInfo, datamap string, id string, key string, value string)
+	UnsafelySetOutUserVariable(app AppInfo, datamap string, id string, key string, value string)
+
+	// UnsafelySetOutGroupVariable [不安全][需要master权限]设置其他数据库中的群组变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - value: 变量值。
+	// - datamap: 数据表名称。
+	UnsafelySetOutGroupVariable(app AppInfo, datamap string, id string, key string, value string)
+
+	// UnsafelySetOutGlobalVariable [不安全][需要master权限]设置其他数据库中的全局变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - value: 变量值。
+	// - datamap: 数据表名称。
+	UnsafelySetOutGlobalVariable(app AppInfo, datamap string, id string, key string, value string)
 
 	// GetUserVariable 获取用户变量
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息变量名称。
+	// - key: 变量名称。
+	// 返回: 变量值，是否存在。
+	GetUserVariable(app AppInfo, msg MessageEventInfo, key string) (string, bool)
+
 	// GetGroupVariable 获取群组变量
-	// GetGlobalVariable 获取全局变量
-	// GetOutUserVariable 获取其他数据库中的用户变量（需要权限）
-	// GetOutGroupVariable 获取其他数据库中的群组变量（需要权限）
-	// GetOutGlobalVariable 获取其他数据库中的全局变量（需要权限）
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息变量名称。
+	// - key: 变量名称。
+	// 返回: 变量值，是否存在。
+	GetGroupVariable(app AppInfo, msg MessageEventInfo, key string) (string, bool)
+
+	// GetOutUserVariable [需要master权限]获取其他数据库中的用户变量
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息变量名称。
+	// - key: 变量名称。
+	// - datamap：数据表名称。
+	// 返回: 变量值，是否存在。
+	GetOutUserVariable(app AppInfo, datamap string, msg MessageEventInfo, key string) (string, bool)
+
+	// GetOutGroupVariable [需要master权限]获取其他数据库中的群组变量
+	// 参数：
+	// - app: 应用信息。
+	// - msg: 消息变量名称。
+	// - key: 变量名称。
+	// - datamap：数据表名称。
+	// 返回: 变量值，是否存在。
+	GetOutGroupVariable(app AppInfo, datamap string, msg MessageEventInfo, key string) (string, bool)
+
+	// UnsafelyGetUserVariable [不安全][需要master权限]获取用户变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// 返回: 变量值，是否存在。
+	UnsafelyGetUserVariable(app AppInfo, id string, key string) (string, bool)
+
+	// UnsafelyGetGroupVariable [不安全][需要master权限]获取群组变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// 返回: 变量值，是否存在。
+	UnsafelyGetGroupVariable(app AppInfo, id string, key string) (string, bool)
+
+	// UnsafelyGetGlobalVariable [不安全][需要master权限]获取全局变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// 返回: 变量值，是否存在。
+	UnsafelyGetGlobalVariable(app AppInfo, id string, key string) (string, bool)
+
+	// UnsafelyGetOutUserVariable [不安全][需要master权限]获取其他数据库中的用户变量
 	// 参数：
 	// - app: 应用信息。
 	// - id: 数据单元 ID。
 	// - key: 变量名称。
 	// - datamap：数据表名称。
 	// 返回: 变量值，是否存在。
-	GetUserVariable(app AppInfo, id string, key string) (string, bool)
-	GetGroupVariable(app AppInfo, id string, key string) (string, bool)
-	GetGlobalVariable(app AppInfo, id string, key string) (string, bool)
-	GetOutUserVariable(app AppInfo, datamap string, id string, key string) (string, bool)
-	GetOutGroupVariable(app AppInfo, datamap string, id string, key string) (string, bool)
-	GetOutGlobalVariable(app AppInfo, datamap string, id string, key string) (string, bool)
+	UnsafelyGetOutUserVariable(app AppInfo, datamap string, id string, key string) (string, bool)
+
+	// UnsafelyGetOutGroupVariable [不安全][需要master权限]获取其他数据库中的群组变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - datamap：数据表名称。
+	// 返回: 变量值，是否存在。
+	UnsafelyGetOutGroupVariable(app AppInfo, datamap string, id string, key string) (string, bool)
+
+	// UnsafelyGetOutGlobalVariable [不安全][需要master权限]获取其他数据库中的全局变量
+	// 参数：
+	// - app: 应用信息。
+	// - id: 数据单元 ID。
+	// - key: 变量名称。
+	// - datamap：数据表名称。
+	// 返回: 变量值，是否存在。
+	UnsafelyGetOutGlobalVariable(app AppInfo, datamap string, id string, key string) (string, bool)
 
 	// GetIntConfig 获取指定数据单元的整数型配置。
 	// 参数:
@@ -344,6 +476,12 @@ type WindStandardDataBaseAPI interface {
 	// - key: 配置名称。
 	// 返回: 配置值，是否存在。
 	GetStringSliceConfig(app AppInfo, datamap string, key string) ([]string, bool)
+
+	// CreatePublicDatamap [不安全][需要master权限]创建公共数据表
+	// 参数：
+	// - app: 应用信息。
+	// - datamapId: 数据表名称。
+	UnsafelyCreatePublicDatamap(app AppInfo, datamapId string)
 }
 
 type AppInfo struct {

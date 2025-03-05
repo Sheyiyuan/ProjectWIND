@@ -481,7 +481,23 @@ func Start() {
 	select {} // 阻塞
 }
 
-func CreatePublicDatamap(id string) {
+func CreatePublicDatamap(appName string, id string) {
+	// 查询权限
+	hash := getCorePassword()
+	if hash == "" {
+		// 删除数据表哈希
+		dataSet(appName, "config", "hash", "", "", true, true)
+	}
+	datahash, ok := dataGet(appName, "config", "hash", "", true, true)
+	if !ok {
+		LOG.Error("[Error]:Error while get hash of %s", appName)
+		return
+	}
+	if hash != datahash {
+		LOG.Warn("[Warning]:App %s is not allowed to create public datamap", appName)
+		return
+	}
+
 	// 创建公开数据表
 	db, ok := DB.Datamaps[id]
 	if !ok {
@@ -532,9 +548,9 @@ func Get(appName string, datamap string, unit string, id string, key string, isG
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", false, false)
+			dataSet(appName, "config", "hash", "", "", true, true)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
+		datahash, ok := dataGet(appName, "config", "hash", "", true, true)
 		if !ok {
 			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
@@ -559,9 +575,9 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 		hash := getCorePassword()
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", false, false)
+			dataSet(appName, "config", "hash", "", "", true, true)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", false, false)
+		datahash, ok := dataGet(appName, "config", "hash", "", true, true)
 		if !ok {
 			LOG.Error("[Error]:Error while get hash of %s", appName)
 		}
