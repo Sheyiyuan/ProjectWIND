@@ -821,33 +821,65 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 //database模块
 // //数据库部分允许字符串变量的读写操作，允许读取配置项操作
 
-type databaseInfo struct {}
+type databaseInfo struct{}
 
 func (dbi *databaseInfo) varSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
 	database.Set(app.Name, datamap, unit, id, key, value)
 }
 
-func (dbi *databaseInfo) SetUserVariable(app wba.AppInfo, id string, key string, value string) {
+func (dbi *databaseInfo) SetUserVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string, value string) {
+	id := fmt.Sprintf("%d", msg.UserId)
 	dbi.varSet(app, app.Name, "user", id, key, value)
 }
 
-func (dbi *databaseInfo) SetGroupVariable(app wba.AppInfo, id string, key string, value string) {
+func (dbi *databaseInfo) SetGroupVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string, value string) {
+	var id string
+	if msg.MessageType == "group" {
+		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
+	}
+	if msg.MessageType == "private" {
+		id = "user_" + fmt.Sprintf("%d", msg.UserId)
+	}
 	dbi.varSet(app, app.Name, "group", id, key, value)
 }
 
-func (dbi *databaseInfo) SetGlobalVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.Name, "global", id, key, value)
-}
-
-func (dbi *databaseInfo) SetOutUserVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+func (dbi *databaseInfo) SetOutUserVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string, value string) {
+	id := fmt.Sprintf("%d", msg.UserId)
 	dbi.varSet(app, datamap, "user", id, key, value)
 }
 
-func (dbi *databaseInfo) SetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+func (dbi *databaseInfo) SetOutGroupVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string, value string) {
+	var id string
+	if msg.MessageType == "group" {
+		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
+	}
+	if msg.MessageType == "private" {
+		id = "user_" + fmt.Sprintf("%d", msg.UserId)
+	}
 	dbi.varSet(app, datamap, "group", id, key, value)
 }
 
-func (dbi *databaseInfo) SetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+func (dbi *databaseInfo) UnsafelySetUserVariable(app wba.AppInfo, id string, key string, value string) {
+	dbi.varSet(app, app.Name, "user", id, key, value)
+}
+
+func (dbi *databaseInfo) UnsafelySetGroupVariable(app wba.AppInfo, id string, key string, value string) {
+	dbi.varSet(app, app.Name, "group", id, key, value)
+}
+
+func (dbi *databaseInfo) UnsafelySetGlobalVariable(app wba.AppInfo, id string, key string, value string) {
+	dbi.varSet(app, app.Name, "global", id, key, value)
+}
+
+func (dbi *databaseInfo) UnsafelySetOutUserVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+	dbi.varSet(app, datamap, "user", id, key, value)
+}
+
+func (dbi *databaseInfo) UnsafelySetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
+	dbi.varSet(app, datamap, "group", id, key, value)
+}
+
+func (dbi *databaseInfo) UnsafelySetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
 	dbi.varSet(app, datamap, "global", id, key, value)
 }
 
@@ -863,27 +895,59 @@ func (dbi *databaseInfo) varGet(app wba.AppInfo, datamap string, unit string, id
 	return resStr, true
 }
 
-func (dbi *databaseInfo) GetUserVariable(app wba.AppInfo, id string, key string) (string, bool) {
+func (dbi *databaseInfo) GetUserVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string) (string, bool) {
+	id := fmt.Sprintf("%d", msg.UserId)
 	return dbi.varGet(app, app.Name, "user", id, key)
 }
 
-func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, id string, key string) (string, bool) {
+func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string) (string, bool) {
+	var id string
+	if msg.MessageType == "group" {
+		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
+	}
+	if msg.MessageType == "private" {
+		id = "user_" + fmt.Sprintf("%d", msg.UserId)
+	}
 	return dbi.varGet(app, app.Name, "group", id, key)
 }
 
-func (dbi *databaseInfo) GetGlobalVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.Name, "global", id, key)
-}
-
-func (dbi *databaseInfo) GetOutUserVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+func (dbi *databaseInfo) GetOutUserVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string) (string, bool) {
+	id := fmt.Sprintf("%d", msg.UserId)
 	return dbi.varGet(app, datamap, "user", id, key)
 }
 
-func (dbi *databaseInfo) GetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+func (dbi *databaseInfo) GetOutGroupVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string) (string, bool) {
+	var id string
+	if msg.MessageType == "group" {
+		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
+	}
+	if msg.MessageType == "private" {
+		id = "user_" + fmt.Sprintf("%d", msg.UserId)
+	}
 	return dbi.varGet(app, datamap, "group", id, key)
 }
 
-func (dbi *databaseInfo) GetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+func (dbi *databaseInfo) UnsafelyGetUserVariable(app wba.AppInfo, id string, key string) (string, bool) {
+	return dbi.varGet(app, app.Name, "user", id, key)
+}
+
+func (dbi *databaseInfo) UnsafelyGetGroupVariable(app wba.AppInfo, id string, key string) (string, bool) {
+	return dbi.varGet(app, app.Name, "group", id, key)
+}
+
+func (dbi *databaseInfo) UnsafelyGetGlobalVariable(app wba.AppInfo, id string, key string) (string, bool) {
+	return dbi.varGet(app, app.Name, "global", id, key)
+}
+
+func (dbi *databaseInfo) UnsafelyGetOutUserVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+	return dbi.varGet(app, datamap, "user", id, key)
+}
+
+func (dbi *databaseInfo) UnsafelyGetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
+	return dbi.varGet(app, datamap, "group", id, key)
+}
+
+func (dbi *databaseInfo) UnsafelyGetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
 	return dbi.varGet(app, datamap, "global", id, key)
 }
 
@@ -945,6 +1009,11 @@ func (dbi *databaseInfo) GetStringSliceConfig(app wba.AppInfo, datamap string, k
 		return nil, false
 	}
 	return resSlice, true
+}
+
+func (dbi *databaseInfo) UnsafelyCreatePublicDatamap(app wba.AppInfo, datamapId string) {
+	appName := app.Name
+	database.CreatePublicDatamap(appName, datamapId)
 }
 
 // 文件管理模块

@@ -4,10 +4,11 @@ import (
 	"ProjectWIND/LOG"
 	"ProjectWIND/typed"
 	"ProjectWIND/wba"
-	"github.com/dop251/goja"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/dop251/goja"
 )
 
 var CmdMap = make([]map[string]wba.Cmd, 4)
@@ -116,21 +117,30 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wsp.Set("GetVersionInfo", AppApi.GetVersionInfo)
 		_ = wsd.Set("SetUserVariable", DatabaseApi.SetUserVariable)
 		_ = wsd.Set("SetGroupVariable", DatabaseApi.SetGroupVariable)
-		_ = wsd.Set("SetGlobalVariable", DatabaseApi.SetGlobalVariable)
 		_ = wsd.Set("SetOutUserVariable", DatabaseApi.SetOutUserVariable)
 		_ = wsd.Set("SetOutGroupVariable", DatabaseApi.SetOutGroupVariable)
-		_ = wsd.Set("SetOutGlobalVariable", DatabaseApi.SetOutGlobalVariable)
+		_ = wsd.Set("UnsafelySetUserVariable", DatabaseApi.UnsafelySetUserVariable)
+		_ = wsd.Set("UnsafelySetGroupVariable", DatabaseApi.UnsafelySetGroupVariable)
+		_ = wsd.Set("UnsafelySetGlobalVariable", DatabaseApi.UnsafelySetGlobalVariable)
+		_ = wsd.Set("UnsafelySetOutUserVariable", DatabaseApi.UnsafelySetOutUserVariable)
+		_ = wsd.Set("UnsafelySetOutGroupVariable", DatabaseApi.UnsafelySetOutGroupVariable)
+		_ = wsd.Set("UnsafelySetOutGlobalVariable", DatabaseApi.UnsafelySetOutGlobalVariable)
 		_ = wsd.Set("GetUserVariable", DatabaseApi.GetUserVariable)
 		_ = wsd.Set("GetGroupVariable", DatabaseApi.GetGroupVariable)
-		_ = wsd.Set("GetGlobalVariable", DatabaseApi.GetGlobalVariable)
 		_ = wsd.Set("GetOutUserVariable", DatabaseApi.GetOutUserVariable)
 		_ = wsd.Set("GetOutGroupVariable", DatabaseApi.GetOutGroupVariable)
-		_ = wsd.Set("GetOutGlobalVariable", DatabaseApi.GetOutGlobalVariable)
+		_ = wsd.Set("UnsafelyGetUserVariable", DatabaseApi.UnsafelyGetUserVariable)
+		_ = wsd.Set("UnsafelyGetGroupVariable", DatabaseApi.UnsafelyGetGroupVariable)
+		_ = wsd.Set("UnsafelyGetGlobalVariable", DatabaseApi.UnsafelyGetGlobalVariable)
+		_ = wsd.Set("UnsafelyGetOutUserVariable", DatabaseApi.UnsafelyGetOutUserVariable)
+		_ = wsd.Set("UnsafelyGetOutGroupVariable", DatabaseApi.UnsafelyGetOutGroupVariable)
+		_ = wsd.Set("UnsafelyGetOutGlobalVariable", DatabaseApi.UnsafelyGetOutGlobalVariable)
 		_ = wsd.Set("GetIntConfig", DatabaseApi.GetIntConfig)
 		_ = wsd.Set("GetFloatConfig", DatabaseApi.GetFloatConfig)
 		_ = wsd.Set("GetStringConfig", DatabaseApi.GetStringConfig)
 		_ = wsd.Set("GetIntSliceConfig", DatabaseApi.GetIntSliceConfig)
 		_ = wsd.Set("GetStringSliceConfig", DatabaseApi.GetStringSliceConfig)
+		_ = wsd.Set("UnsafelyCreatePublicDatamap", DatabaseApi.UnsafelyCreatePublicDatamap)
 
 		// 获取AppInit函数
 		appInitVal := runtime.Get("AppInit")
