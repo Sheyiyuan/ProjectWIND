@@ -10,11 +10,10 @@ import (
 )
 
 func WebServer(port string) *server.Hertz {
-	// 创建自定义日志记录器实例
-	customLogger := &LOG.CustomLogger{}
 	// 设置自定义日志记录器
-	hlog.SetLogger(customLogger)
+	hlog.SetLevel(hlog.LevelFatal)
 	h := server.Default(server.WithHostPorts("0.0.0.0:" + port))
+	LOG.Info("WebUI已启动，监听端口：%v", port)
 	h.Use(LoggingMiddleware())
 	h.GET("/index", func(ctx context.Context, c *app.RequestContext) {
 		//返回webui/index.html
@@ -41,6 +40,6 @@ func LoggingMiddleware() app.HandlerFunc {
 		// 获取请求处理状态码
 		statusCode := ctx.Response.StatusCode()
 		// 在请求处理后记录结束信息
-		hlog.Debugf("收到网络请求 | IP: %s | Path: %s | Status: %d ", clientIP, fullPath, statusCode)
+		LOG.Debug("收到网络请求 | IP: %s | Path: %s | Status: %d ", clientIP, fullPath, statusCode)
 	}
 }

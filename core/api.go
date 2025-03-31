@@ -5,6 +5,7 @@ import (
 	"ProjectWIND/database"
 	"ProjectWIND/wba"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -26,6 +27,20 @@ type apiInfo struct{}
 //1.无响应API,使用ws协议处理
 
 // UnsafelySendMsg 发送消息(自动判断消息类型)
+//
+// 注意：该API不安全，除非你知道你在做什么。
+//
+// 参数：
+//
+//   - messageType: 消息类型，可选值为 "private" 和 "group
+//
+//   - groupId: 群号，当messageType为"group"时必填
+//
+//   - userId: 用户ID，当messageType为"private"时必填
+//
+//   - message: 要发送的消息内容，类型为字符串
+//
+//   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
 func (a *apiInfo) UnsafelySendMsg(messageType string, groupId int64, userId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -59,6 +74,16 @@ func (a *apiInfo) UnsafelySendMsg(messageType string, groupId int64, userId int6
 }
 
 // UnsafelySendPrivateMsg 发送私聊消息
+//
+// 注意：该API不安全，除非你知道你在做什么。
+//
+// 参数：
+//
+//   - userId: 用户ID
+//
+//   - message: 要发送的消息内容，类型为字符串
+//
+//   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
 func (a *apiInfo) UnsafelySendPrivateMsg(userId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -77,6 +102,16 @@ func (a *apiInfo) UnsafelySendPrivateMsg(userId int64, message string, autoEscap
 }
 
 // UnsafelySendGroupMsg 发送群消息
+//
+// 注意：该API不安全，除非你知道你在做什么。
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - message: 要发送的消息内容，类型为字符串
+//
+//   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
 func (a *apiInfo) UnsafelySendGroupMsg(groupId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -95,6 +130,14 @@ func (a *apiInfo) UnsafelySendGroupMsg(groupId int64, message string, autoEscape
 }
 
 // SendMsg 回复消息(自动判断消息类型)
+//
+// 参数：
+//
+//   - msg: 消息事件信息
+//
+//   - message: 要发送的消息内容，类型为字符串
+//
+//   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
 func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -131,6 +174,14 @@ func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape b
 }
 
 // SendPrivateMsg 回复私聊消息
+//
+// 参数：
+//
+//   - msg: 原始消息事件信息
+//
+//   - message: 要发送的消息内容，类型为字符串
+//
+//   - autoEscape: 是否自动转义，可选值为 true 和 false
 func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -149,6 +200,14 @@ func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoE
 }
 
 // SendGroupMsg 回复群消息
+//
+// 参数：
+//
+//   - msg: 原始消息事件信息
+//
+//   - message: 要发送的消息内容，类型为字符串
+//
+//   - autoEscape: 是否自动转义，可选值为 true 和 false
 func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -167,6 +226,12 @@ func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEsc
 }
 
 // UnsafelyDeleteMsg 撤回消息
+//
+// 注意：该API不安全，除非你知道你在做什么。
+//
+// 参数：
+//
+//   - messageId: 要撤回的消息ID
 func (a *apiInfo) UnsafelyDeleteMsg(messageId int32) {
 	// 构建删除消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -182,6 +247,10 @@ func (a *apiInfo) UnsafelyDeleteMsg(messageId int32) {
 }
 
 // DeleteMsg 撤回消息
+//
+// 参数：
+//
+//   - msg: 原始消息事件信息
 func (a *apiInfo) DeleteMsg(msg wba.MessageEventInfo) {
 	// 构建删除消息的JSON数据
 	var messageData wba.APIRequestInfo
@@ -197,6 +266,12 @@ func (a *apiInfo) DeleteMsg(msg wba.MessageEventInfo) {
 }
 
 // SendLike 发送赞
+//
+// 参数：
+//
+//   - userId: 要赞的用户ID
+//
+//   - times: 赞的次数
 func (a *apiInfo) SendLike(userId int64, times int) {
 	// 构建发送赞的JSON数据
 	var messageData wba.APIRequestInfo
@@ -213,6 +288,14 @@ func (a *apiInfo) SendLike(userId int64, times int) {
 }
 
 // SetGroupKick 将指定用户移出群聊(需要群主或管理员权限)
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - userId: 用户ID
+//
+//   - rejectAddRequest: 是否拒绝该用户的后续加群请求，可选值为 true 和 false
 func (a *apiInfo) SetGroupKick(groupId int64, userId int64, rejectAddRequest bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_kick"
@@ -229,6 +312,14 @@ func (a *apiInfo) SetGroupKick(groupId int64, userId int64, rejectAddRequest boo
 }
 
 // SetGroupBan 将指定用户禁言(需要群主或管理员权限)
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - userId: 用户ID
+//
+//   - duration: 禁言时长，单位为秒，0表示取消禁言
 func (a *apiInfo) SetGroupBan(groupId int64, userId int64, duration int32) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_ban"
@@ -245,6 +336,12 @@ func (a *apiInfo) SetGroupBan(groupId int64, userId int64, duration int32) {
 }
 
 // SetGroupWholeBan 设置全员禁言(需要群主或管理员权限)
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - enable: 是否启用全员禁言，可选值为 true 和 false
 func (a *apiInfo) SetGroupWholeBan(groupId int64, enable bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_whole_ban"
@@ -260,6 +357,14 @@ func (a *apiInfo) SetGroupWholeBan(groupId int64, enable bool) {
 }
 
 // SetGroupAdmin 设置群管理员(需要群主权限)
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - userId: 用户ID
+//
+//   - enable: 是否设置为管理员，可选值为 true 和 false
 func (a *apiInfo) SetGroupAdmin(groupId int64, userId int64, enable bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_admin"
@@ -275,7 +380,15 @@ func (a *apiInfo) SetGroupAdmin(groupId int64, userId int64, enable bool) {
 	return
 }
 
-// SetGroupCard 设置群名片(需要群主或管理员权限)
+// SetGroupCard 设置群名片（可能需要群主或管理员权限）
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - userId: 用户ID
+//
+//   - card: 新的群名片
 func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_card"
@@ -292,6 +405,12 @@ func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
 }
 
 // SetGroupName 设置群名称(可能需要群主或管理员权限)
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - groupName: 新的群名称
 func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_name"
@@ -307,6 +426,12 @@ func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
 }
 
 // SetGroupLeave 退出群聊
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - isDismiss: 是否解散群聊，仅当退出的是群主时有效，可选值为 true 和 false
 func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_leave"
@@ -322,6 +447,14 @@ func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
 }
 
 // SetGroupSpecialTitle 设置群专属头衔(需要群主权限)
+//
+// 参数：
+//
+//   - groupId: 群号
+//
+//   - userId: 用户ID
+//
+//   - specialTitle: 新的专属头衔
 func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_special_title"
@@ -339,6 +472,14 @@ func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle
 }
 
 // SetFriendAddRequest 处理加好友请求
+//
+// 参数：
+//
+//   - flag: 请求标识，由上报的事件中获得
+//
+//   - approve: 是否同意请求，可选值为 true 和 false
+//
+//   - remark: 设置好友的备注信息
 func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_friend_add_request"
@@ -355,6 +496,16 @@ func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) 
 }
 
 // SetGroupAddRequest 处理加群请求/邀请
+//
+// 参数：
+//
+//   - flag: 请求标识，由上报的事件中获得
+//
+//   - subType: 子类型，可能是 "invite" 或 "add", 由上报的事件中获得
+//
+//   - approve: 是否同意请求，可选值为 true 和 false
+//
+//   - reason: 拒绝请求的原因，仅当 approve 为 false 时有效
 func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, reason string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_add_request"
@@ -398,7 +549,7 @@ func (a *apiInfo) CleanCache() {
 	return
 }
 
-// 2.有响应API，需添加echo字段
+// 2.有响应API，需添加echo字段，统一返回响应结构体
 
 // GetLoginInfo 获取登录信息
 func (a *apiInfo) GetLoginInfo() (Response wba.APIResponseInfo) {
@@ -783,13 +934,22 @@ func (a *apiInfo) GetStatus() (Response wba.APIResponseInfo) {
 /*
 关于LOG模块的说明
 
-1.日志模块使用go-logging库，日志级别分为DEBUG、Info、Warn、Error。
+1.日志模块级别分为TRACE、DEBUG、INFO、NOTICE、WARN、ERROR五个级别，默认级别为INFO。
 
-2.日志模块提供LogWith方法，可以自定义日志级别，调用级别为DEBUG时，会打印输出调用者的文件名、函数名、行号。
+2.日志模块提供LogWith方法，可以自定义日志级别。
 
 3.日志模块提供Log方法，默认日志级别为INFO。
 */
 
+// LogWith 打印日志(带级别)
+//
+// 参数：
+//   - level: 日志级别，支持"TRACE"、"DEBUG"、"INFO"、"NOTICE"、 "WARN"、"ERROR"
+//   - content: 日志内容
+//   - args: 可选参数，用于格式化日志内容
+//
+// 返回值：
+//   - 无
 func (a *apiInfo) LogWith(level string, content string, args ...interface{}) {
 	level = strings.ToLower(level)
 	switch level {
@@ -814,8 +974,28 @@ func (a *apiInfo) LogWith(level string, content string, args ...interface{}) {
 	}
 }
 
+// Log 打印日志
+//
+// 参数：
+//   - content: 日志内容
+//   - args: 可选参数，用于格式化日志内容
 func (a *apiInfo) Log(content string, args ...interface{}) {
 	LOG.Info(content, args...)
+}
+
+// MsgUnmarshal 解析消息
+//
+// 参数：
+//   - messageJSON: 从数据库中获取的JSON序列化后的消息字符串
+//
+// 返回值：
+//   - wba.MessageEventInfo: 解析后的消息事件信息，解析失败时返回空结构体
+func (a *apiInfo) MsgUnmarshal(messageJSON string) (msg wba.MessageEventInfo) {
+	err := json.Unmarshal([]byte(messageJSON), &msg)
+	if err != nil {
+		return wba.MessageEventInfo{}
+	}
+	return msg
 }
 
 //database模块
@@ -824,12 +1004,12 @@ func (a *apiInfo) Log(content string, args ...interface{}) {
 type databaseInfo struct{}
 
 func (dbi *databaseInfo) varSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
-	database.Set(app.Name, datamap, unit, id, key, value)
+	database.Set(app.AppKey.Name, datamap, unit, id, key, value)
 }
 
 func (dbi *databaseInfo) SetUserVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string, value string) {
 	id := fmt.Sprintf("%d", msg.UserId)
-	dbi.varSet(app, app.Name, "user", id, key, value)
+	dbi.varSet(app, app.AppKey.Name, "user", id, key, value)
 }
 
 func (dbi *databaseInfo) SetGroupVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string, value string) {
@@ -840,7 +1020,7 @@ func (dbi *databaseInfo) SetGroupVariable(app wba.AppInfo, msg wba.MessageEventI
 	if msg.MessageType == "private" {
 		id = "user_" + fmt.Sprintf("%d", msg.UserId)
 	}
-	dbi.varSet(app, app.Name, "group", id, key, value)
+	dbi.varSet(app, app.AppKey.Name, "group", id, key, value)
 }
 
 func (dbi *databaseInfo) SetOutUserVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string, value string) {
@@ -860,15 +1040,15 @@ func (dbi *databaseInfo) SetOutGroupVariable(app wba.AppInfo, datamap string, ms
 }
 
 func (dbi *databaseInfo) UnsafelySetUserVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.Name, "user", id, key, value)
+	dbi.varSet(app, app.AppKey.Name, "user", id, key, value)
 }
 
 func (dbi *databaseInfo) UnsafelySetGroupVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.Name, "group", id, key, value)
+	dbi.varSet(app, app.AppKey.Name, "group", id, key, value)
 }
 
 func (dbi *databaseInfo) UnsafelySetGlobalVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.Name, "global", id, key, value)
+	dbi.varSet(app, app.AppKey.Name, "global", id, key, value)
 }
 
 func (dbi *databaseInfo) UnsafelySetOutUserVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
@@ -884,7 +1064,7 @@ func (dbi *databaseInfo) UnsafelySetOutGlobalVariable(app wba.AppInfo, datamap s
 }
 
 func (dbi *databaseInfo) varGet(app wba.AppInfo, datamap string, unit string, id string, key string) (string, bool) {
-	res, ok := database.Get(app.Name, datamap, unit, id, key, false)
+	res, ok := database.Get(app.AppKey.Name, datamap, unit, id, key, false)
 	if !ok {
 		return "", false
 	}
@@ -897,7 +1077,7 @@ func (dbi *databaseInfo) varGet(app wba.AppInfo, datamap string, unit string, id
 
 func (dbi *databaseInfo) GetUserVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string) (string, bool) {
 	id := fmt.Sprintf("%d", msg.UserId)
-	return dbi.varGet(app, app.Name, "user", id, key)
+	return dbi.varGet(app, app.AppKey.Name, "user", id, key)
 }
 
 func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string) (string, bool) {
@@ -908,7 +1088,7 @@ func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, msg wba.MessageEventI
 	if msg.MessageType == "private" {
 		id = "user_" + fmt.Sprintf("%d", msg.UserId)
 	}
-	return dbi.varGet(app, app.Name, "group", id, key)
+	return dbi.varGet(app, app.AppKey.Name, "group", id, key)
 }
 
 func (dbi *databaseInfo) GetOutUserVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string) (string, bool) {
@@ -928,15 +1108,15 @@ func (dbi *databaseInfo) GetOutGroupVariable(app wba.AppInfo, datamap string, ms
 }
 
 func (dbi *databaseInfo) UnsafelyGetUserVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.Name, "user", id, key)
+	return dbi.varGet(app, app.AppKey.Name, "user", id, key)
 }
 
 func (dbi *databaseInfo) UnsafelyGetGroupVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.Name, "group", id, key)
+	return dbi.varGet(app, app.AppKey.Name, "group", id, key)
 }
 
 func (dbi *databaseInfo) UnsafelyGetGlobalVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.Name, "global", id, key)
+	return dbi.varGet(app, app.AppKey.Name, "global", id, key)
 }
 
 func (dbi *databaseInfo) UnsafelyGetOutUserVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
@@ -952,7 +1132,7 @@ func (dbi *databaseInfo) UnsafelyGetOutGlobalVariable(app wba.AppInfo, datamap s
 }
 
 func (dbi *databaseInfo) GetIntConfig(app wba.AppInfo, datamap string, key string) (int64, bool) {
-	res, ok := database.Get(app.Name, datamap, "config", "number", key, true)
+	res, ok := database.Get(app.AppKey.Name, datamap, "config", "number", key, true)
 	if !ok {
 		return 0, false
 	}
@@ -964,7 +1144,7 @@ func (dbi *databaseInfo) GetIntConfig(app wba.AppInfo, datamap string, key strin
 }
 
 func (dbi *databaseInfo) GetStringConfig(app wba.AppInfo, datamap string, key string) (string, bool) {
-	res, ok := database.Get(app.Name, datamap, "config", "string", key, true)
+	res, ok := database.Get(app.AppKey.Name, datamap, "config", "string", key, true)
 	if !ok {
 		return "", false
 	}
@@ -976,7 +1156,7 @@ func (dbi *databaseInfo) GetStringConfig(app wba.AppInfo, datamap string, key st
 }
 
 func (dbi *databaseInfo) GetFloatConfig(app wba.AppInfo, datamap string, key string) (float64, bool) {
-	res, ok := database.Get(app.Name, datamap, "config", "float", key, true)
+	res, ok := database.Get(app.AppKey.Name, datamap, "config", "float", key, true)
 	if !ok {
 		return 0, false
 	}
@@ -988,7 +1168,7 @@ func (dbi *databaseInfo) GetFloatConfig(app wba.AppInfo, datamap string, key str
 }
 
 func (dbi *databaseInfo) GetIntSliceConfig(app wba.AppInfo, datamap string, key string) ([]int64, bool) {
-	res, ok := database.Get(app.Name, datamap, "config", "number_slice", key, true)
+	res, ok := database.Get(app.AppKey.Name, datamap, "config", "number_slice", key, true)
 	if !ok {
 		return nil, false
 	}
@@ -1000,7 +1180,7 @@ func (dbi *databaseInfo) GetIntSliceConfig(app wba.AppInfo, datamap string, key 
 }
 
 func (dbi *databaseInfo) GetStringSliceConfig(app wba.AppInfo, datamap string, key string) ([]string, bool) {
-	res, ok := database.Get(app.Name, datamap, "config", "string_slice", key, true)
+	res, ok := database.Get(app.AppKey.Name, datamap, "config", "string_slice", key, true)
 	if !ok {
 		return nil, false
 	}
@@ -1012,7 +1192,7 @@ func (dbi *databaseInfo) GetStringSliceConfig(app wba.AppInfo, datamap string, k
 }
 
 func (dbi *databaseInfo) UnsafelyCreatePublicDatamap(app wba.AppInfo, datamapId string) {
-	appName := app.Name
+	appName := app.AppKey.Name
 	database.CreatePublicDatamap(appName, datamapId)
 }
 

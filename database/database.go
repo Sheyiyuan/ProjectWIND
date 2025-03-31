@@ -4,6 +4,7 @@ import (
 	"ProjectWIND/LOG"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -155,7 +156,7 @@ func getCorePassword() string {
 		return ""
 	}
 	config := make(map[string]string)
-	err = json.Unmarshal([]byte(dataJson), config)
+	err = json.Unmarshal([]byte(dataJson), &config)
 	if err != nil {
 		LOG.Error("[Error]Error while unmarshal data: %v", err)
 		return ""
@@ -467,6 +468,7 @@ func Start() {
 			select {
 			case <-dataChan:
 				// 接收到信号，保存数据并退出程序
+				fmt.Println("")
 				LOG.Info("Received signal, saving data and exiting...")
 				saveData(DB)
 				os.Exit(0)
@@ -588,79 +590,3 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 	}
 	dataSet(appName, unit, id, key, value, true, false)
 }
-
-// func VarSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
-// 	Set(app.Name, datamap, unit, id, key, value)
-// }
-
-// func VarGet(app wba.AppInfo, datamap string, unit string, id string, key string) (string, bool) {
-// 	res, ok := Get(app.Name, datamap, unit, id, key, false)
-// 	if !ok {
-// 		return "", false
-// 	}
-// 	resStr, ok := res.(string)
-// 	if !ok {
-// 		return "", false
-// 	}
-// 	return resStr, true
-// }
-
-// func GetIntConfig(app wba.AppInfo, datamap string, key string) (int64, bool) {
-// 	res, ok := Get(app.Name, datamap, "config", "number", key, true)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	resInt, ok := res.(int64)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	return resInt, true
-// }
-
-// func GetStringConfig(app wba.AppInfo, datamap string, key string) (string, bool) {
-// 	res, ok := Get(app.Name, datamap, "config", "string", key, true)
-// 	if !ok {
-// 		return "", false
-// 	}
-// 	resStr, ok := res.(string)
-// 	if !ok {
-// 		return "", false
-// 	}
-// 	return resStr, true
-// }
-
-// func GetFloatConfig(app wba.AppInfo, datamap string, key string) (float64, bool) {
-// 	res, ok := Get(app.Name, datamap, "config", "float", key, true)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	resFloat, ok := res.(float64)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	return resFloat, true
-// }
-
-// func GetIntSliceConfig(app wba.AppInfo, datamap string, key string) ([]int64, bool) {
-// 	res, ok := Get(app.Name, datamap, "config", "number_slice", key, true)
-// 	if !ok {
-// 		return nil, false
-// 	}
-// 	resSlice, ok := res.([]int64)
-// 	if !ok {
-// 		return nil, false
-// 	}
-// 	return resSlice, true
-// }
-
-// func GetStringSliceConfig(app wba.AppInfo, datamap string, key string) ([]string, bool) {
-// 	res, ok := Get(app.Name, datamap, "config", "string_slice", key, true)
-// 	if !ok {
-// 		return nil, false
-// 	}
-// 	resSlice, ok := res.([]string)
-// 	if !ok {
-// 		return nil, false
-// 	}
-// 	return resSlice, true
-// }

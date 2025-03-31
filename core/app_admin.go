@@ -2,7 +2,6 @@ package core
 
 import (
 	"ProjectWIND/LOG"
-	"ProjectWIND/typed"
 	"ProjectWIND/wba"
 	"os"
 	"path/filepath"
@@ -12,12 +11,13 @@ import (
 )
 
 var CmdMap = make([]map[string]wba.Cmd, 4)
-var AppMap = make(map[typed.AppKey]wba.AppInfo)
+var AppMap = make(map[wba.AppKey]wba.AppInfo)
 
+// ReloadApps 重新加载应用
 func ReloadApps() (total int, success int) {
 	// 清空AppMap和CmdMap
 	CmdMap = make([]map[string]wba.Cmd, 4)
-	AppMap = make(map[typed.AppKey]wba.AppInfo)
+	AppMap = make(map[wba.AppKey]wba.AppInfo)
 	appsDir := "./data/app/"
 	appFiles, err := os.ReadDir(appsDir)
 	total = 0
@@ -36,6 +36,7 @@ func ReloadApps() (total int, success int) {
 	return total, success
 }
 
+// reloadAPP 重新加载单个应用
 func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta int) {
 	if file.IsDir() {
 		return 0, 0
@@ -61,6 +62,7 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		wbaObj := runtime.NewObject()
 		wsp := runtime.NewObject()
 		wsd := runtime.NewObject()
+		wst := runtime.NewObject()
 		_ = runtime.Set("wba", wbaObj)
 		_ = wbaObj.Set("NewApp", wba.NewApp)
 		_ = wbaObj.Set("WithName", wba.WithName)
@@ -73,6 +75,8 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wbaObj.Set("WithRule", wba.WithRule)
 		_ = wbaObj.Set("wsp", wsp)
 		_ = wbaObj.Set("wsd", wsd)
+		_ = wbaObj.Set("wst", wst)
+		//WSP注册
 		_ = wsp.Set("UnsafelySendMsg", AppApi.UnsafelySendMsg)
 		_ = wsp.Set("UnsafelySendPrivateMsg", AppApi.UnsafelySendPrivateMsg)
 		_ = wsp.Set("UnsafelySendGroupMsg", AppApi.UnsafelySendGroupMsg)
@@ -113,8 +117,12 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		_ = wsp.Set("CanSendRecord", AppApi.CanSendRecord)
 		_ = wsp.Set("SetRestart", AppApi.SetRestart)
 		_ = wsp.Set("CleanCache", AppApi.CleanCache)
-		_ = wsp.Set("GetLoginInfo", AppApi.LogWith)
 		_ = wsp.Set("GetVersionInfo", AppApi.GetVersionInfo)
+		//WST注册
+		_ = wst.Set("LogWith", AppApi.LogWith)
+		_ = wst.Set("Log", AppApi.Log)
+		_ = wst.Set("MsgMarshal", AppApi.MsgUnmarshal)
+		//WSD注册
 		_ = wsd.Set("SetUserVariable", DatabaseApi.SetUserVariable)
 		_ = wsd.Set("SetGroupVariable", DatabaseApi.SetGroupVariable)
 		_ = wsd.Set("SetOutUserVariable", DatabaseApi.SetOutUserVariable)
@@ -196,14 +204,14 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			return 1, 0
 		}
 
-		AppMap[typed.AppKey{AppName: appInfo.Name, AppType: appInfo.AppType, AppVersion: appInfo.Version, AppLevel: checkAppLevel(appInfo)}] = appInfo
-		cmdIndex := AppTypeToInt(appInfo.AppType)
+		AppMap[wba.AppKey{Name: appInfo.AppKey.Name, Type: appInfo.AppKey.Type, Version: appInfo.AppKey.Version, Level: checkAppLevel(appInfo)}] = appInfo
+		cmdIndex := AppTypeToInt(appInfo.AppKey.Type)
 		// 合并命令
 		CmdMap[cmdIndex] = mergeMaps(CmdMap[cmdIndex], appInfo.CmdMap)
 
 		// 注册定时任务
 		for _, task := range appInfo.ScheduledTasks {
-			RegisterCron(appInfo.Name, task)
+			RegisterCron(appInfo.AppKey.Name, task)
 		}
 
 		LOG.Info("JS应用 %s 加载成功", pluginPath)

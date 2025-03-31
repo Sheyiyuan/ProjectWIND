@@ -1,13 +1,14 @@
 package wba
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
 type APP interface {
 	Get() AppInfo
-	Init(api WindStandardProtocolAPI) error
-	InitWSD(api WindStandardDataBaseAPI) error
+	//Init(api WindStandardProtocolAPI) error
+	//InitWSD(api WindStandardDataBaseAPI) error
 }
 
 // WindStandardProtocolAPI Wind标准协议API,提供了onebot11标准中的API接口。
@@ -477,7 +478,7 @@ type WindStandardDataBaseAPI interface {
 	// 返回: 配置值，是否存在。
 	GetStringSliceConfig(app AppInfo, datamap string, key string) ([]string, bool)
 
-	// CreatePublicDatamap [不安全][需要master权限]创建公共数据表
+	// UnsafelyCreatePublicDatamap [不安全][需要master权限]创建公共数据表
 	// 参数：
 	// - app: 应用信息。
 	// - datamapId: 数据表名称。
@@ -485,15 +486,11 @@ type WindStandardDataBaseAPI interface {
 }
 
 type AppInfo struct {
-	Name                string
-	Version             string
+	AppKey              AppKey
 	Author              string
 	Description         string
-	Namespace           string
 	Homepage            string
 	License             string
-	AppType             string
-	Rule                string
 	CmdMap              map[string]Cmd
 	MessageEventHandler func(msg MessageEventInfo)
 	NoticeEventHandler  func(msg NoticeEventInfo)
@@ -533,13 +530,13 @@ type AppInfoOption func(ei *AppInfo)
 
 func WithName(name string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.Name = name
+		ei.AppKey.Name = name
 	}
 }
 
 func WithVersion(version string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.Version = version
+		ei.AppKey.Version = version
 	}
 }
 
@@ -569,26 +566,28 @@ func WithLicense(license string) AppInfoOption {
 
 func WithAppType(appType string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.AppType = appType
+		ei.AppKey.Type = appType
 	}
 }
 
 func WithRule(rule string) AppInfoOption {
 	return func(ei *AppInfo) {
-		ei.Rule = fmt.Sprintf("rule_%s", rule)
+		ei.AppKey.Rule = fmt.Sprintf("rule_%s", rule)
 	}
 }
 
 func NewApp(opts ...AppInfoOption) AppInfo {
 	Ext := AppInfo{
-		Name:           "WSP",
-		Version:        "v1.0.0",
-		Author:         "WSP",
+		AppKey: AppKey{
+			Name:    "WSP",
+			Version: "v1.0.0",
+			Type:    "fun",
+			Rule:    "none",
+		},
+		Author:         "WIND",
 		Description:    "A simple and easy-to-use bot framework",
 		Homepage:       "https://github.com/Sheyiyuan/wind_app_model",
 		License:        "MIT",
-		AppType:        "fun",
-		Rule:           "none",
 		CmdMap:         make(map[string]Cmd),
 		ScheduledTasks: map[string]ScheduledTaskInfo{},
 		API:            map[string]interface{}{},
@@ -601,10 +600,10 @@ func NewApp(opts ...AppInfoOption) AppInfo {
 
 func (ai *AppInfo) NewCmd(name string, description string, solve func(args []string, msg MessageEventInfo)) Cmd {
 	return Cmd{
-		Name:  name,
-		Desc:  description,
-		Solve: solve,
-		Rule:  ai.Rule,
+		Name:   name,
+		Desc:   description,
+		Solve:  solve,
+		AppKey: ai.AppKey,
 	}
 }
 
@@ -618,10 +617,10 @@ func (ai *AppInfo) NewScheduledTask(name string, description string, cron string
 }
 
 type Cmd struct {
-	Name  string
-	Desc  string
-	Solve func(args []string, msg MessageEventInfo)
-	Rule  string
+	Name   string
+	Desc   string
+	Solve  func(args []string, msg MessageEventInfo)
+	AppKey AppKey
 }
 
 type MessageEventInfo struct {
@@ -709,20 +708,22 @@ type MessageInfo struct {
 }
 
 type MessageDataInfo struct {
-	Type    string `json:"type,omitempty"`
-	Text    string `json:"text,omitempty"`
-	Id      string `json:"id,omitempty"`
-	File    string `json:"file,omitempty"`
-	Url     string `json:"url,omitempty"`
-	Magic   string `json:"magic,omitempty"`
-	Qq      string `json:"qq,omitempty"`
-	Title   string `json:"title,omitempty"`
-	Content string `json:"content,omitempty"`
-	Image   string `json:"image,omitempty"`
-	Audio   string `json:"audio,omitempty"`
-	Lat     string `json:"lat,omitempty"`
-	Lon     string `json:"lon,omitempty"`
-	Data    string `json:"data,omitempty"`
+	Type     string `json:"type,omitempty"`
+	Text     string `json:"text,omitempty"`
+	Id       string `json:"id,omitempty"`
+	File     string `json:"file,omitempty"`
+	Url      string `json:"url,omitempty"`
+	Magic    string `json:"magic,omitempty"`
+	Qq       string `json:"qq,omitempty"`
+	Title    string `json:"title,omitempty"`
+	Content  any    `json:"content,omitempty"` // Content string or []MessageDataInfo
+	Image    string `json:"image,omitempty"`
+	Audio    string `json:"audio,omitempty"`
+	Lat      string `json:"lat,omitempty"`
+	Lon      string `json:"lon,omitempty"`
+	Data     string `json:"data,omitempty"`
+	UserId   int64  `json:"user_id,omitempty"`
+	Nickname string `json:"name,omitempty"`
 }
 
 type ParamsInfo struct {
@@ -864,3 +865,39 @@ type ScheduledTaskInfo struct {
 
 var WSP WindStandardProtocolAPI
 var WSD WindStandardDataBaseAPI
+
+type AppKey struct {
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Level   int32  `json:"level"`
+	Version string `json:"version"`
+	Rule    string `json:"rule"`
+}
+
+func (msg *MessageEventInfo) GetAt() []string {
+	var at []string
+	for _, v := range msg.Message {
+		if v.Type == "at" {
+			at = append(at, v.Data.Qq)
+		}
+	}
+	return at
+}
+
+func (msg *MessageEventInfo) GetText() string {
+	var text string
+	for _, v := range msg.Message {
+		if v.Type == "text" {
+			text += v.Data.Text
+		}
+	}
+	return text
+}
+
+func (msg *MessageEventInfo) JsonMarshal() string {
+	jsonData, err := json.Marshal(msg)
+	if err != nil {
+		return ""
+	}
+	return string(jsonData)
+}
