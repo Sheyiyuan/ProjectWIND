@@ -44,9 +44,9 @@ func WebSocketHandler(protocol typed.Protocol) error {
 		}
 	}(conn)
 	LOG.Info("已连接到WebSocket服务器: %v", u.String())
-	ProtocolInfo := AppApi.GetVersionInfo()
+	ProtocolInfo := ProtocolApi.GetVersionInfo()
 	LOG.Info("协议端信息: %v-%v", ProtocolInfo.Data.AppName, ProtocolInfo.Data.AppVersion)
-	logInfo := AppApi.GetLoginInfo()
+	logInfo := ProtocolApi.GetLoginInfo()
 	LOG.Info("连接到账号: %v（%v）", logInfo.Data.Nickname, logInfo.Data.UserId)
 
 	// 定义通道,缓存消息和消息类型，防止消息处理阻塞

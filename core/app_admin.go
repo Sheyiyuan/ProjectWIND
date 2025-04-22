@@ -3,21 +3,45 @@ package core
 import (
 	"ProjectWIND/LOG"
 	"ProjectWIND/wba"
+	"github.com/dop251/goja"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
-
-	"github.com/dop251/goja"
 )
 
-var CmdMap = make([]map[string]wba.Cmd, 4)
+type CamelCaseFieldNameMapper struct{}
+
+func (CamelCaseFieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
+	name := f.Name
+	if len(name) == 0 {
+		return name
+	}
+	// 首字母小写
+	return strings.ToLower(name[:1]) + name[1:]
+}
+
+func (CamelCaseFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
+	name := m.Name
+	if len(name) == 0 {
+		return name
+	}
+	// 首字母小写
+	return strings.ToLower(name[:1]) + name[1:]
+}
+
+var GlobalCmdAgentSelector = wba.NewCmdAgentSelector()
+var CmdMap = make(map[wba.AppKey]wba.CmdList)
 var AppMap = make(map[wba.AppKey]wba.AppInfo)
+var ScheduledTaskMap = make(map[wba.AppKey]map[string]wba.ScheduledTaskInfo)
 
 // ReloadApps 重新加载应用
 func ReloadApps() (total int, success int) {
 	// 清空AppMap和CmdMap
-	CmdMap = make([]map[string]wba.Cmd, 4)
+	CmdMap = make(map[wba.AppKey]wba.CmdList)
 	AppMap = make(map[wba.AppKey]wba.AppInfo)
+	ScheduledTaskMap = make(map[wba.AppKey]map[string]wba.ScheduledTaskInfo)
+	GlobalCmdAgentSelector = wba.NewCmdAgentSelector()
 	appsDir := "./data/app/"
 	appFiles, err := os.ReadDir(appsDir)
 	total = 0
@@ -32,7 +56,8 @@ func ReloadApps() (total int, success int) {
 		total += totalDelta
 		success += successDelta
 	}
-	CmdMap[0] = AppCore.CmdMap
+	CmdMap[AppCore.AppKey] = AppCore.CmdMap
+	GlobalCmdAgentSelector.AddCmdMap(CmdMap)
 	return total, success
 }
 
@@ -52,103 +77,124 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 		}
 
 		runtime := goja.New()
-		_, err = runtime.RunString(string(jsCode))
-		if err != nil {
-			LOG.Error("执行应用 %s 失败: %v", pluginPath, err)
-			return 1, 0
+		runtime.SetFieldNameMapper(CamelCaseFieldNameMapper{})
+		runtime.Set("console", map[string]interface{}{
+			"log": func(v ...interface{}) {
+				LOG.Info("JS log: %v", v...)
+			},
+			"error": func(v ...interface{}) {
+				LOG.Error("JS error: %v", v...)
+			},
+		})
+
+		// 添加错误捕获
+		safeRun := func(fn func() error) {
+			defer func() {
+				if r := recover(); r != nil {
+					LOG.Error("JS执行错误: %v", r)
+				}
+			}()
+			if err := fn(); err != nil {
+				LOG.Error("JS执行错误: %v", err)
+			}
 		}
+
+		// 修改JS代码执行部分
+		safeRun(func() error {
+			_, err := runtime.RunString(string(jsCode))
+			return err
+		})
 
 		// 创建JS可用的wbaObj对象
 		wbaObj := runtime.NewObject()
-		wsp := runtime.NewObject()
-		wsd := runtime.NewObject()
-		wst := runtime.NewObject()
+		//wsp := runtime.NewObject()
+		//wsd := runtime.NewObject()
+		//wst := runtime.NewObject()
 		_ = runtime.Set("wba", wbaObj)
-		_ = wbaObj.Set("NewApp", wba.NewApp)
-		_ = wbaObj.Set("WithName", wba.WithName)
-		_ = wbaObj.Set("WithAuthor", wba.WithAuthor)
-		_ = wbaObj.Set("WithVersion", wba.WithVersion)
-		_ = wbaObj.Set("WithDescription", wba.WithDescription)
-		_ = wbaObj.Set("WithWebUrl", wba.WithWebUrl)
-		_ = wbaObj.Set("WithLicense", wba.WithLicense)
-		_ = wbaObj.Set("WithAppType", wba.WithAppType)
-		_ = wbaObj.Set("WithRule", wba.WithRule)
-		_ = wbaObj.Set("wsp", wsp)
-		_ = wbaObj.Set("wsd", wsd)
-		_ = wbaObj.Set("wst", wst)
-		//WSP注册
-		_ = wsp.Set("UnsafelySendMsg", AppApi.UnsafelySendMsg)
-		_ = wsp.Set("UnsafelySendPrivateMsg", AppApi.UnsafelySendPrivateMsg)
-		_ = wsp.Set("UnsafelySendGroupMsg", AppApi.UnsafelySendGroupMsg)
-		_ = wsp.Set("SendMsg", AppApi.SendMsg)
-		_ = wsp.Set("SendPrivateMsg", AppApi.SendPrivateMsg)
-		_ = wsp.Set("SendGroupMsg", AppApi.SendGroupMsg)
-		_ = wsp.Set("UnsafelyDeleteMsg", AppApi.UnsafelyDeleteMsg)
-		_ = wsp.Set("DeleteMsg", AppApi.DeleteMsg)
-		_ = wsp.Set("SendLike", AppApi.SendLike)
-		_ = wsp.Set("SetGroupKick", AppApi.SetGroupKick)
-		_ = wsp.Set("SetGroupBan", AppApi.SetGroupBan)
-		_ = wsp.Set("SetGroupWholeBan", AppApi.SetGroupWholeBan)
-		_ = wsp.Set("SetGroupAdmin", AppApi.SetGroupAdmin)
-		_ = wsp.Set("SetGroupLeave", AppApi.SetGroupLeave)
-		_ = wsp.Set("SetGroupCard", AppApi.SetGroupCard)
-		_ = wsp.Set("SetGroupName", AppApi.SetGroupName)
-		_ = wsp.Set("SetGroupSpecialTitle", AppApi.SetGroupSpecialTitle)
-		_ = wsp.Set("SetFriendAddRequest", AppApi.SetFriendAddRequest)
-		_ = wsp.Set("SetGroupAddRequest", AppApi.SetGroupAddRequest)
-		_ = wsp.Set("GetLoginInfo", AppApi.GetLoginInfo)
-		_ = wsp.Set("GetVersionInfo", AppApi.GetVersionInfo)
-		_ = wsp.Set("GetMsg", AppApi.GetMsg)
-		_ = wsp.Set("GetGroupInfo", AppApi.GetGroupInfo)
-		_ = wsp.Set("GetForwardMsg", AppApi.GetForwardMsg)
-		_ = wsp.Set("GetStrangerInfo", AppApi.GetStrangerInfo)
-		_ = wsp.Set("GetGroupList", AppApi.GetGroupList)
-		_ = wsp.Set("GetGroupMemberList", AppApi.GetGroupMemberList)
-		_ = wsp.Set("GetFriendList", AppApi.GetFriendList)
-		_ = wsp.Set("GetGroupMemberInfo", AppApi.GetGroupMemberInfo)
-		_ = wsp.Set("GetGroupHonorInfo", AppApi.GetGroupHonorInfo)
-		_ = wsp.Set("GetStatus", AppApi.GetStatus)
-		_ = wsp.Set("GetCookies", AppApi.GetCookies)
-		_ = wsp.Set("GetCSRFToken", AppApi.GetCSRFToken)
-		_ = wsp.Set("GetCredentials", AppApi.GetCredentials)
-		_ = wsp.Set("GetImage", AppApi.GetImage)
-		_ = wsp.Set("GetRecord", AppApi.GetRecord)
-		_ = wsp.Set("CanSendImage", AppApi.CanSendImage)
-		_ = wsp.Set("CanSendRecord", AppApi.CanSendRecord)
-		_ = wsp.Set("SetRestart", AppApi.SetRestart)
-		_ = wsp.Set("CleanCache", AppApi.CleanCache)
-		_ = wsp.Set("GetVersionInfo", AppApi.GetVersionInfo)
-		//WST注册
-		_ = wst.Set("LogWith", AppApi.LogWith)
-		_ = wst.Set("Log", AppApi.Log)
-		_ = wst.Set("MsgMarshal", AppApi.MsgUnmarshal)
-		//WSD注册
-		_ = wsd.Set("SetUserVariable", DatabaseApi.SetUserVariable)
-		_ = wsd.Set("SetGroupVariable", DatabaseApi.SetGroupVariable)
-		_ = wsd.Set("SetOutUserVariable", DatabaseApi.SetOutUserVariable)
-		_ = wsd.Set("SetOutGroupVariable", DatabaseApi.SetOutGroupVariable)
-		_ = wsd.Set("UnsafelySetUserVariable", DatabaseApi.UnsafelySetUserVariable)
-		_ = wsd.Set("UnsafelySetGroupVariable", DatabaseApi.UnsafelySetGroupVariable)
-		_ = wsd.Set("UnsafelySetGlobalVariable", DatabaseApi.UnsafelySetGlobalVariable)
-		_ = wsd.Set("UnsafelySetOutUserVariable", DatabaseApi.UnsafelySetOutUserVariable)
-		_ = wsd.Set("UnsafelySetOutGroupVariable", DatabaseApi.UnsafelySetOutGroupVariable)
-		_ = wsd.Set("UnsafelySetOutGlobalVariable", DatabaseApi.UnsafelySetOutGlobalVariable)
-		_ = wsd.Set("GetUserVariable", DatabaseApi.GetUserVariable)
-		_ = wsd.Set("GetGroupVariable", DatabaseApi.GetGroupVariable)
-		_ = wsd.Set("GetOutUserVariable", DatabaseApi.GetOutUserVariable)
-		_ = wsd.Set("GetOutGroupVariable", DatabaseApi.GetOutGroupVariable)
-		_ = wsd.Set("UnsafelyGetUserVariable", DatabaseApi.UnsafelyGetUserVariable)
-		_ = wsd.Set("UnsafelyGetGroupVariable", DatabaseApi.UnsafelyGetGroupVariable)
-		_ = wsd.Set("UnsafelyGetGlobalVariable", DatabaseApi.UnsafelyGetGlobalVariable)
-		_ = wsd.Set("UnsafelyGetOutUserVariable", DatabaseApi.UnsafelyGetOutUserVariable)
-		_ = wsd.Set("UnsafelyGetOutGroupVariable", DatabaseApi.UnsafelyGetOutGroupVariable)
-		_ = wsd.Set("UnsafelyGetOutGlobalVariable", DatabaseApi.UnsafelyGetOutGlobalVariable)
-		_ = wsd.Set("GetIntConfig", DatabaseApi.GetIntConfig)
-		_ = wsd.Set("GetFloatConfig", DatabaseApi.GetFloatConfig)
-		_ = wsd.Set("GetStringConfig", DatabaseApi.GetStringConfig)
-		_ = wsd.Set("GetIntSliceConfig", DatabaseApi.GetIntSliceConfig)
-		_ = wsd.Set("GetStringSliceConfig", DatabaseApi.GetStringSliceConfig)
-		_ = wsd.Set("UnsafelyCreatePublicDatamap", DatabaseApi.UnsafelyCreatePublicDatamap)
+		_ = wbaObj.Set("newApp", wba.NewApp)
+		_ = wbaObj.Set("withName", wba.WithSelector)
+		_ = wbaObj.Set("withDescription", wba.WithDescription)
+		_ = wbaObj.Set("withWebUrl", wba.WithWebUrl)
+		_ = wbaObj.Set("withLicense", wba.WithLicense)
+		_ = wbaObj.Set("wsp", ProtocolApi)
+		_ = wbaObj.Set("wsd", DatabaseApi)
+		_ = wbaObj.Set("wst", ToolsApi)
+		//_ = wbaObj.Set("wsp", wsp)
+		//_ = wbaObj.Set("wsd", wsd)
+		//_ = wbaObj.Set("wst", wst)
+		////WSP注册
+		//_ = wsp.Set("unsafelySendMsg", ProtocolApi.UnsafelySendMsg)
+		//_ = wsp.Set("unsafelySendPrivateMsg", ProtocolApi.UnsafelySendPrivateMsg)
+		//_ = wsp.Set("unsafelySendGroupMsg", ProtocolApi.UnsafelySendGroupMsg)
+		//_ = wsp.Set("sendMsg", ProtocolApi.SendMsg)
+		//_ = wsp.Set("sendPrivateMsg", ProtocolApi.SendPrivateMsg)
+		//_ = wsp.Set("sendGroupMsg", ProtocolApi.SendGroupMsg)
+		//_ = wsp.Set("unsafelyDeleteMsg", ProtocolApi.UnsafelyDeleteMsg)
+		//_ = wsp.Set("deleteMsg", ProtocolApi.DeleteMsg)
+		//_ = wsp.Set("sendLike", ProtocolApi.SendLike)
+		//_ = wsp.Set("setGroupKick", ProtocolApi.SetGroupKick)
+		//_ = wsp.Set("setGroupBan", ProtocolApi.SetGroupBan)
+		//_ = wsp.Set("setGroupWholeBan", ProtocolApi.SetGroupWholeBan)
+		//_ = wsp.Set("setGroupAdmin", ProtocolApi.SetGroupAdmin)
+		//_ = wsp.Set("setGroupLeave", ProtocolApi.SetGroupLeave)
+		//_ = wsp.Set("setGroupCard", ProtocolApi.SetGroupCard)
+		//_ = wsp.Set("setGroupName", ProtocolApi.SetGroupName)
+		//_ = wsp.Set("setGroupSpecialTitle", ProtocolApi.SetGroupSpecialTitle)
+		//_ = wsp.Set("setFriendAddRequest", ProtocolApi.SetFriendAddRequest)
+		//_ = wsp.Set("setGroupAddRequest", ProtocolApi.SetGroupAddRequest)
+		//_ = wsp.Set("getLoginInfo", ProtocolApi.GetLoginInfo)
+		//_ = wsp.Set("getVersionInfo", ProtocolApi.GetVersionInfo)
+		//_ = wsp.Set("getMsg", ProtocolApi.GetMsg)
+		//_ = wsp.Set("getGroupInfo", ProtocolApi.GetGroupInfo)
+		//_ = wsp.Set("getForwardMsg", ProtocolApi.GetForwardMsg)
+		//_ = wsp.Set("getStrangerInfo", ProtocolApi.GetStrangerInfo)
+		//_ = wsp.Set("getGroupList", ProtocolApi.GetGroupList)
+		//_ = wsp.Set("getGroupMemberList", ProtocolApi.GetGroupMemberList)
+		//_ = wsp.Set("getFriendList", ProtocolApi.GetFriendList)
+		//_ = wsp.Set("getGroupMemberInfo", ProtocolApi.GetGroupMemberInfo)
+		//_ = wsp.Set("getGroupHonorInfo", ProtocolApi.GetGroupHonorInfo)
+		//_ = wsp.Set("getStatus", ProtocolApi.GetStatus)
+		//_ = wsp.Set("getCookies", ProtocolApi.GetCookies)
+		//_ = wsp.Set("getCSRFToken", ProtocolApi.GetCSRFToken)
+		//_ = wsp.Set("getCredentials", ProtocolApi.GetCredentials)
+		//_ = wsp.Set("getImage", ProtocolApi.GetImage)
+		//_ = wsp.Set("getRecord", ProtocolApi.GetRecord)
+		//_ = wsp.Set("canSendImage", ProtocolApi.CanSendImage)
+		//_ = wsp.Set("canSendRecord", ProtocolApi.CanSendRecord)
+		//_ = wsp.Set("cetRestart", ProtocolApi.SetRestart)
+		//_ = wsp.Set("cleanCache", ProtocolApi.CleanCache)
+		//_ = wsp.Set("getVersionInfo", ProtocolApi.GetVersionInfo)
+		////WST注册
+		//_ = wst.Set("logWith", ToolsApi.LogWith)
+		//_ = wst.Set("log", ToolsApi.Log)
+		//_ = wst.Set("msgMarshal", ToolsApi.MsgUnmarshal)
+		////WSD注册
+		//_ = wsd.Set("setUserVariable", DatabaseApi.SetUserVariable)
+		//_ = wsd.Set("setGroupVariable", DatabaseApi.SetGroupVariable)
+		//_ = wsd.Set("setOutUserVariable", DatabaseApi.SetOutUserVariable)
+		//_ = wsd.Set("setOutGroupVariable", DatabaseApi.SetOutGroupVariable)
+		//_ = wsd.Set("unsafelySetUserVariable", DatabaseApi.UnsafelySetUserVariable)
+		//_ = wsd.Set("unsafelySetGroupVariable", DatabaseApi.UnsafelySetGroupVariable)
+		//_ = wsd.Set("unsafelySetGlobalVariable", DatabaseApi.UnsafelySetGlobalVariable)
+		//_ = wsd.Set("unsafelySetOutUserVariable", DatabaseApi.UnsafelySetOutUserVariable)
+		//_ = wsd.Set("unsafelySetOutGroupVariable", DatabaseApi.UnsafelySetOutGroupVariable)
+		//_ = wsd.Set("unsafelySetOutGlobalVariable", DatabaseApi.UnsafelySetOutGlobalVariable)
+		//_ = wsd.Set("getUserVariable", DatabaseApi.GetUserVariable)
+		//_ = wsd.Set("getGroupVariable", DatabaseApi.GetGroupVariable)
+		//_ = wsd.Set("getOutUserVariable", DatabaseApi.GetOutUserVariable)
+		//_ = wsd.Set("getOutGroupVariable", DatabaseApi.GetOutGroupVariable)
+		//_ = wsd.Set("unsafelyGetUserVariable", DatabaseApi.UnsafelyGetUserVariable)
+		//_ = wsd.Set("unsafelyGetGroupVariable", DatabaseApi.UnsafelyGetGroupVariable)
+		//_ = wsd.Set("unsafelyGetGlobalVariable", DatabaseApi.UnsafelyGetGlobalVariable)
+		//_ = wsd.Set("unsafelyGetOutUserVariable", DatabaseApi.UnsafelyGetOutUserVariable)
+		//_ = wsd.Set("unsafelyGetOutGroupVariable", DatabaseApi.UnsafelyGetOutGroupVariable)
+		//_ = wsd.Set("unsafelyGetOutGlobalVariable", DatabaseApi.UnsafelyGetOutGlobalVariable)
+		//_ = wsd.Set("getIntConfig", DatabaseApi.GetIntConfig)
+		//_ = wsd.Set("getFloatConfig", DatabaseApi.GetFloatConfig)
+		//_ = wsd.Set("getStringConfig", DatabaseApi.GetStringConfig)
+		//_ = wsd.Set("getIntSliceConfig", DatabaseApi.GetIntSliceConfig)
+		//_ = wsd.Set("getStringSliceConfig", DatabaseApi.GetStringSliceConfig)
+		//_ = wsd.Set("unsafelyCreatePublicDatamap", DatabaseApi.UnsafelyCreatePublicDatamap)
 
 		// 获取AppInit函数
 		appInitVal := runtime.Get("AppInit")
@@ -169,81 +215,72 @@ func reloadAPP(file os.DirEntry, appsDir string) (totalDelta int, successDelta i
 			return 1, 0
 		}
 
-		// 调用Init方法
-		initVal := jsApp.ToObject(runtime).Get("Init")
-		initFunc, ok := goja.AssertFunction(initVal)
-		if !ok {
-			LOG.Error("应用 %s 缺少有效的Init方法", pluginPath)
-			return 1, 0
-		}
-
-		_, err = initFunc(wbaObj)
-		if err != nil {
-			LOG.Trace("应用初始化失败: %v", err)
-			return 1, 0
-		}
-
-		// 调用Get方法
-		getVal := jsApp.ToObject(runtime).Get("Get")
-		getFunc, ok := goja.AssertFunction(getVal)
-		if !ok {
-			LOG.Error("应用 %s 缺少有效的Get方法", pluginPath)
-			return 1, 0
-		}
-
-		appInfoVal, err := getFunc(jsApp)
-		if err != nil {
-			LOG.Error("获取应用信息失败: %v", err)
-			return 1, 0
-		}
+		//// 调用Init方法
+		//initVal := jsApp.ToObject(runtime).Get("Init")
+		//initFunc, ok := goja.AssertFunction(initVal)
+		//if !ok {
+		//	LOG.Error("应用 %s 缺少有效的Init方法 %#v", pluginPath, initFunc)
+		//	return 1, 0
+		//}
+		//
+		//_, err = initFunc(wbaObj)
+		//if err != nil {
+		//	LOG.Trace("应用初始化失败: %v", err)
+		//	return 1, 0
+		//}
+		//
+		//// 调用Get方法
+		//getVal := jsApp.ToObject(runtime).Get("Get")
+		//getFunc, ok := goja.AssertFunction(getVal)
+		//if !ok {
+		//	LOG.Error("应用 %s 缺少有效的Get方法", pluginPath)
+		//	return 1, 0
+		//}
+		//
+		//appInfoVal, err := getFunc(jsApp)
+		//if err != nil {
+		//	LOG.Error("获取应用信息失败: %v", err)
+		//	return 1, 0
+		//}
 
 		// 转换应用信息
 		var appInfo wba.AppInfo
-		if err := runtime.ExportTo(appInfoVal, &appInfo); err != nil {
+		if err := runtime.ExportTo(jsApp, &appInfo); err != nil {
 			LOG.Error("应用信息转换失败: %v", err)
 			return 1, 0
 		}
+		// 初始化map字段
+		if appInfo.CmdMap == nil {
+			appInfo.CmdMap = make(map[string]wba.Cmd)
+		}
+		if appInfo.ScheduledTasks == nil {
+			appInfo.ScheduledTasks = make(map[string]wba.ScheduledTaskInfo)
+		}
 
-		AppMap[wba.AppKey{Name: appInfo.AppKey.Name, Type: appInfo.AppKey.Type, Version: appInfo.AppKey.Version, Level: checkAppLevel(appInfo)}] = appInfo
-		cmdIndex := AppTypeToInt(appInfo.AppKey.Type)
-		// 合并命令
-		CmdMap[cmdIndex] = mergeMaps(CmdMap[cmdIndex], appInfo.CmdMap)
+		AppMap[appInfo.AppKey] = appInfo
+
+		CmdMap[appInfo.AppKey] = appInfo.CmdMap
+
+		ScheduledTaskMap[appInfo.AppKey] = appInfo.ScheduledTasks
 
 		// 注册定时任务
 		for _, task := range appInfo.ScheduledTasks {
-			RegisterCron(appInfo.AppKey.Name, task)
+			taskCopy := task
+			RegisterCron(appInfo.AppKey.Name, wba.ScheduledTaskInfo{
+				Name: taskCopy.Name,
+				Desc: taskCopy.Desc,
+				Cron: taskCopy.Cron,
+				Task: func() {
+					safeRun(func() error {
+						taskCopy.Task()
+						return nil
+					})
+				},
+			})
 		}
 
 		LOG.Info("JS应用 %s 加载成功", pluginPath)
 		return 1, 1
 	}
 	return 0, 0
-}
-
-func mergeMaps(map1, map2 map[string]wba.Cmd) map[string]wba.Cmd {
-	// 合并map1和map2到map3中
-	map3 := make(map[string]wba.Cmd)
-	for key, value := range map1 {
-		map3[key] = value
-	}
-	for key, value := range map2 {
-		map3[key] = value
-	}
-	return map3
-}
-
-func AppTypeToInt(appType string) int32 {
-	appType = strings.ToLower(appType)
-	switch appType {
-	case "system":
-		return 1
-	case "rule":
-		return 2
-	default:
-		return 3
-	}
-}
-
-func checkAppLevel(appInfo wba.AppInfo) int32 {
-	return 0
 }

@@ -2,15 +2,12 @@ package core
 
 import (
 	"ProjectWIND/LOG"
-	"ProjectWIND/database"
 	"ProjectWIND/wba"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
-	"strings"
 )
 
-type apiInfo struct{}
+type protocolAPI struct{}
 
 //一、Protocol模块
 
@@ -41,7 +38,7 @@ type apiInfo struct{}
 //   - message: 要发送的消息内容，类型为字符串
 //
 //   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
-func (a *apiInfo) UnsafelySendMsg(messageType string, groupId int64, userId int64, message string, autoEscape bool) {
+func (p *protocolAPI) UnsafelySendMsg(messageType string, groupId int64, userId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_msg"
@@ -84,7 +81,7 @@ func (a *apiInfo) UnsafelySendMsg(messageType string, groupId int64, userId int6
 //   - message: 要发送的消息内容，类型为字符串
 //
 //   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
-func (a *apiInfo) UnsafelySendPrivateMsg(userId int64, message string, autoEscape bool) {
+func (p *protocolAPI) UnsafelySendPrivateMsg(userId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_private_msg"
@@ -112,7 +109,7 @@ func (a *apiInfo) UnsafelySendPrivateMsg(userId int64, message string, autoEscap
 //   - message: 要发送的消息内容，类型为字符串
 //
 //   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
-func (a *apiInfo) UnsafelySendGroupMsg(groupId int64, message string, autoEscape bool) {
+func (p *protocolAPI) UnsafelySendGroupMsg(groupId int64, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_group_msg"
@@ -138,7 +135,7 @@ func (a *apiInfo) UnsafelySendGroupMsg(groupId int64, message string, autoEscape
 //   - message: 要发送的消息内容，类型为字符串
 //
 //   - autoEscape: 是否自动转义（解析消息内容中的CQ码），可选值为 true 和 false
-func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+func (p *protocolAPI) SendMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 
@@ -182,7 +179,7 @@ func (a *apiInfo) SendMsg(msg wba.MessageEventInfo, message string, autoEscape b
 //   - message: 要发送的消息内容，类型为字符串
 //
 //   - autoEscape: 是否自动转义，可选值为 true 和 false
-func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+func (p *protocolAPI) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_private_msg"
@@ -208,7 +205,7 @@ func (a *apiInfo) SendPrivateMsg(msg wba.MessageEventInfo, message string, autoE
 //   - message: 要发送的消息内容，类型为字符串
 //
 //   - autoEscape: 是否自动转义，可选值为 true 和 false
-func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
+func (p *protocolAPI) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEscape bool) {
 	// 构建发送消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_group_msg"
@@ -232,7 +229,7 @@ func (a *apiInfo) SendGroupMsg(msg wba.MessageEventInfo, message string, autoEsc
 // 参数：
 //
 //   - messageId: 要撤回的消息ID
-func (a *apiInfo) UnsafelyDeleteMsg(messageId int32) {
+func (p *protocolAPI) UnsafelyDeleteMsg(messageId int32) {
 	// 构建删除消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "delete_msg"
@@ -251,7 +248,7 @@ func (a *apiInfo) UnsafelyDeleteMsg(messageId int32) {
 // 参数：
 //
 //   - msg: 原始消息事件信息
-func (a *apiInfo) DeleteMsg(msg wba.MessageEventInfo) {
+func (p *protocolAPI) DeleteMsg(msg wba.MessageEventInfo) {
 	// 构建删除消息的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "delete_msg"
@@ -272,7 +269,7 @@ func (a *apiInfo) DeleteMsg(msg wba.MessageEventInfo) {
 //   - userId: 要赞的用户ID
 //
 //   - times: 赞的次数
-func (a *apiInfo) SendLike(userId int64, times int) {
+func (p *protocolAPI) SendLike(userId int64, times int) {
 	// 构建发送赞的JSON数据
 	var messageData wba.APIRequestInfo
 	messageData.Action = "send_like"
@@ -296,7 +293,7 @@ func (a *apiInfo) SendLike(userId int64, times int) {
 //   - userId: 用户ID
 //
 //   - rejectAddRequest: 是否拒绝该用户的后续加群请求，可选值为 true 和 false
-func (a *apiInfo) SetGroupKick(groupId int64, userId int64, rejectAddRequest bool) {
+func (p *protocolAPI) SetGroupKick(groupId int64, userId int64, rejectAddRequest bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_kick"
 	messageData.Params.GroupId = groupId
@@ -320,7 +317,7 @@ func (a *apiInfo) SetGroupKick(groupId int64, userId int64, rejectAddRequest boo
 //   - userId: 用户ID
 //
 //   - duration: 禁言时长，单位为秒，0表示取消禁言
-func (a *apiInfo) SetGroupBan(groupId int64, userId int64, duration int32) {
+func (p *protocolAPI) SetGroupBan(groupId int64, userId int64, duration int32) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_ban"
 	messageData.Params.GroupId = groupId
@@ -342,7 +339,7 @@ func (a *apiInfo) SetGroupBan(groupId int64, userId int64, duration int32) {
 //   - groupId: 群号
 //
 //   - enable: 是否启用全员禁言，可选值为 true 和 false
-func (a *apiInfo) SetGroupWholeBan(groupId int64, enable bool) {
+func (p *protocolAPI) SetGroupWholeBan(groupId int64, enable bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_whole_ban"
 	messageData.Params.GroupId = groupId
@@ -365,7 +362,7 @@ func (a *apiInfo) SetGroupWholeBan(groupId int64, enable bool) {
 //   - userId: 用户ID
 //
 //   - enable: 是否设置为管理员，可选值为 true 和 false
-func (a *apiInfo) SetGroupAdmin(groupId int64, userId int64, enable bool) {
+func (p *protocolAPI) SetGroupAdmin(groupId int64, userId int64, enable bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_admin"
 	messageData.Params.GroupId = groupId
@@ -389,7 +386,7 @@ func (a *apiInfo) SetGroupAdmin(groupId int64, userId int64, enable bool) {
 //   - userId: 用户ID
 //
 //   - card: 新的群名片
-func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
+func (p *protocolAPI) SetGroupCard(groupId int64, userId int64, card string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_card"
 	messageData.Params.GroupId = groupId
@@ -411,7 +408,7 @@ func (a *apiInfo) SetGroupCard(groupId int64, userId int64, card string) {
 //   - groupId: 群号
 //
 //   - groupName: 新的群名称
-func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
+func (p *protocolAPI) SetGroupName(groupId int64, groupName string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_name"
 	messageData.Params.GroupId = groupId
@@ -432,7 +429,7 @@ func (a *apiInfo) SetGroupName(groupId int64, groupName string) {
 //   - groupId: 群号
 //
 //   - isDismiss: 是否解散群聊，仅当退出的是群主时有效，可选值为 true 和 false
-func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
+func (p *protocolAPI) SetGroupLeave(groupId int64, isDismiss bool) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_leave"
 	messageData.Params.GroupId = groupId
@@ -455,7 +452,7 @@ func (a *apiInfo) SetGroupLeave(groupId int64, isDismiss bool) {
 //   - userId: 用户ID
 //
 //   - specialTitle: 新的专属头衔
-func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string) {
+func (p *protocolAPI) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_special_title"
 	messageData.Params.GroupId = groupId
@@ -480,7 +477,7 @@ func (a *apiInfo) SetGroupSpecialTitle(groupId int64, userId int64, specialTitle
 //   - approve: 是否同意请求，可选值为 true 和 false
 //
 //   - remark: 设置好友的备注信息
-func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) {
+func (p *protocolAPI) SetFriendAddRequest(flag string, approve bool, remark string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_friend_add_request"
 	messageData.Params.Flag = flag
@@ -506,7 +503,7 @@ func (a *apiInfo) SetFriendAddRequest(flag string, approve bool, remark string) 
 //   - approve: 是否同意请求，可选值为 true 和 false
 //
 //   - reason: 拒绝请求的原因，仅当 approve 为 false 时有效
-func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, reason string) {
+func (p *protocolAPI) SetGroupAddRequest(flag string, subType string, approve bool, reason string) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_group_add_request"
 	messageData.Params.Flag = flag
@@ -523,7 +520,7 @@ func (a *apiInfo) SetGroupAddRequest(flag string, subType string, approve bool, 
 }
 
 // SetRestart 重启
-func (a *apiInfo) SetRestart(delay int32) {
+func (p *protocolAPI) SetRestart(delay int32) {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "set_restart"
 	messageData.Params.Delay = delay
@@ -537,7 +534,7 @@ func (a *apiInfo) SetRestart(delay int32) {
 }
 
 // CleanCache 清理缓存
-func (a *apiInfo) CleanCache() {
+func (p *protocolAPI) CleanCache() {
 	var messageData wba.APIRequestInfo
 	messageData.Action = "clean_cache"
 	_, err := wsAPI(messageData)
@@ -552,7 +549,7 @@ func (a *apiInfo) CleanCache() {
 // 2.有响应API，需添加echo字段，统一返回响应结构体
 
 // GetLoginInfo 获取登录信息
-func (a *apiInfo) GetLoginInfo() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetLoginInfo() (Response wba.APIResponseInfo) {
 	LOG.Info("获取登录信息(GetLoginInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -571,7 +568,7 @@ func (a *apiInfo) GetLoginInfo() (Response wba.APIResponseInfo) {
 }
 
 // GetVersionInfo 获取协议信息
-func (a *apiInfo) GetVersionInfo() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetVersionInfo() (Response wba.APIResponseInfo) {
 	LOG.Info("获取协议信息(GetVersionInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -590,7 +587,7 @@ func (a *apiInfo) GetVersionInfo() (Response wba.APIResponseInfo) {
 }
 
 // GetMsg 获取消息
-func (a *apiInfo) GetMsg(messageId int32) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetMsg(messageId int32) (Response wba.APIResponseInfo) {
 	LOG.Info("获取消息(GetMsg)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -610,7 +607,7 @@ func (a *apiInfo) GetMsg(messageId int32) (Response wba.APIResponseInfo) {
 }
 
 // GetForwardMsg 获取合并转发消息
-func (a *apiInfo) GetForwardMsg(id string) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetForwardMsg(id string) (Response wba.APIResponseInfo) {
 	LOG.Info("获取合并转发消息(GetForwardMsg)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -630,7 +627,7 @@ func (a *apiInfo) GetForwardMsg(id string) (Response wba.APIResponseInfo) {
 }
 
 // GetStrangerInfo 获取陌生人信息
-func (a *apiInfo) GetStrangerInfo(userId int64, noCache bool) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetStrangerInfo(userId int64, noCache bool) (Response wba.APIResponseInfo) {
 	LOG.Info("获取陌生人信息(GetStrangerInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -651,7 +648,7 @@ func (a *apiInfo) GetStrangerInfo(userId int64, noCache bool) (Response wba.APIR
 }
 
 // GetFriendList 获取好友列表
-func (a *apiInfo) GetFriendList() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetFriendList() (Response wba.APIResponseInfo) {
 	LOG.Info("获取好友列表(GetFriendList)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -670,7 +667,7 @@ func (a *apiInfo) GetFriendList() (Response wba.APIResponseInfo) {
 }
 
 // GetGroupList 获取群列表
-func (a *apiInfo) GetGroupList() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetGroupList() (Response wba.APIResponseInfo) {
 	LOG.Info("获取群列表(GetGroupList)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -689,7 +686,7 @@ func (a *apiInfo) GetGroupList() (Response wba.APIResponseInfo) {
 }
 
 // GetGroupInfo 获取群信息
-func (a *apiInfo) GetGroupInfo(groupId int64, noCache bool) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetGroupInfo(groupId int64, noCache bool) (Response wba.APIResponseInfo) {
 	LOG.Info("获取群信息(GetGroupInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -710,7 +707,7 @@ func (a *apiInfo) GetGroupInfo(groupId int64, noCache bool) (Response wba.APIRes
 }
 
 // GetGroupMemberInfo 获取群成员信息
-func (a *apiInfo) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) (Response wba.APIResponseInfo) {
 	LOG.Info("获取群成员信息(GetGroupMemberInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -732,7 +729,7 @@ func (a *apiInfo) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) 
 }
 
 // GetGroupMemberList 获取群成员列表
-func (a *apiInfo) GetGroupMemberList(groupId int64) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetGroupMemberList(groupId int64) (Response wba.APIResponseInfo) {
 	LOG.Info("获取群成员列表(GetGroupMemberList)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -752,7 +749,7 @@ func (a *apiInfo) GetGroupMemberList(groupId int64) (Response wba.APIResponseInf
 }
 
 // GetGroupHonorInfo 获取群荣誉信息
-func (a *apiInfo) GetGroupHonorInfo(groupId int64, Type string) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetGroupHonorInfo(groupId int64, Type string) (Response wba.APIResponseInfo) {
 	LOG.Info("获取群荣誉信息(GetGroupHonorInfo)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -773,7 +770,7 @@ func (a *apiInfo) GetGroupHonorInfo(groupId int64, Type string) (Response wba.AP
 }
 
 // GetCookies 获取Cookies
-func (a *apiInfo) GetCookies(domain string) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetCookies(domain string) (Response wba.APIResponseInfo) {
 	LOG.Info("获取Cookies(GetCookies)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -793,7 +790,7 @@ func (a *apiInfo) GetCookies(domain string) (Response wba.APIResponseInfo) {
 }
 
 // GetCSRFToken 获取CSRF Token
-func (a *apiInfo) GetCSRFToken() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetCSRFToken() (Response wba.APIResponseInfo) {
 	LOG.Info("获取CSRF Token(GetCSRFToken)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -812,7 +809,7 @@ func (a *apiInfo) GetCSRFToken() (Response wba.APIResponseInfo) {
 }
 
 // GetCredentials 获取登录令牌
-func (a *apiInfo) GetCredentials(domain string) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetCredentials(domain string) (Response wba.APIResponseInfo) {
 	LOG.Info("获取登录令牌(GetCredentials)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -832,7 +829,7 @@ func (a *apiInfo) GetCredentials(domain string) (Response wba.APIResponseInfo) {
 }
 
 // GetRecord 获取语音
-func (a *apiInfo) GetRecord(file string, outFormat string) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetRecord(file string, outFormat string) (Response wba.APIResponseInfo) {
 	LOG.Info("获取语音(GetRecord)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -853,7 +850,7 @@ func (a *apiInfo) GetRecord(file string, outFormat string) (Response wba.APIResp
 }
 
 // GetImage 获取图片
-func (a *apiInfo) GetImage(file string) (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetImage(file string) (Response wba.APIResponseInfo) {
 	LOG.Info("获取图片(GetImage)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -873,7 +870,7 @@ func (a *apiInfo) GetImage(file string) (Response wba.APIResponseInfo) {
 }
 
 // CanSendImage 检查是否可以发送图片
-func (a *apiInfo) CanSendImage() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) CanSendImage() (Response wba.APIResponseInfo) {
 	LOG.Info("检查是否可以发送图片(CanSendImage)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -892,7 +889,7 @@ func (a *apiInfo) CanSendImage() (Response wba.APIResponseInfo) {
 }
 
 // CanSendRecord 检查是否可以发送语音
-func (a *apiInfo) CanSendRecord() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) CanSendRecord() (Response wba.APIResponseInfo) {
 	LOG.Info("检查是否可以发送语音(CanSendRecord)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -911,7 +908,7 @@ func (a *apiInfo) CanSendRecord() (Response wba.APIResponseInfo) {
 }
 
 // GetStatus 获取状态
-func (a *apiInfo) GetStatus() (Response wba.APIResponseInfo) {
+func (p *protocolAPI) GetStatus() (Response wba.APIResponseInfo) {
 	LOG.Info("获取状态(GetStatus)")
 	var messageData wba.APIRequestInfo
 	var err error
@@ -929,273 +926,6 @@ func (a *apiInfo) GetStatus() (Response wba.APIResponseInfo) {
 	return Response
 }
 
-//二、LOG模块
-
-/*
-关于LOG模块的说明
-
-1.日志模块级别分为TRACE、DEBUG、INFO、NOTICE、WARN、ERROR五个级别，默认级别为INFO。
-
-2.日志模块提供LogWith方法，可以自定义日志级别。
-
-3.日志模块提供Log方法，默认日志级别为INFO。
-*/
-
-// LogWith 打印日志(带级别)
-//
-// 参数：
-//   - level: 日志级别，支持"TRACE"、"DEBUG"、"INFO"、"NOTICE"、 "WARN"、"ERROR"
-//   - content: 日志内容
-//   - args: 可选参数，用于格式化日志内容
-//
-// 返回值：
-//   - 无
-func (a *apiInfo) LogWith(level string, content string, args ...interface{}) {
-	level = strings.ToLower(level)
-	switch level {
-	case "trace":
-		LOG.Trace(content, args...)
-		return
-	case "debug":
-		LOG.Debug(content, args...)
-		return
-	case "notice":
-		LOG.Notice(content, args...)
-		return
-	case "warn":
-		LOG.Warn(content, args...)
-		return
-	case "error":
-		LOG.Error(content, args...)
-		return
-	default:
-		LOG.Info(content, args...)
-		return
-	}
-}
-
-// Log 打印日志
-//
-// 参数：
-//   - content: 日志内容
-//   - args: 可选参数，用于格式化日志内容
-func (a *apiInfo) Log(content string, args ...interface{}) {
-	LOG.Info(content, args...)
-}
-
-// MsgUnmarshal 解析消息
-//
-// 参数：
-//   - messageJSON: 从数据库中获取的JSON序列化后的消息字符串
-//
-// 返回值：
-//   - wba.MessageEventInfo: 解析后的消息事件信息，解析失败时返回空结构体
-func (a *apiInfo) MsgUnmarshal(messageJSON string) (msg wba.MessageEventInfo) {
-	err := json.Unmarshal([]byte(messageJSON), &msg)
-	if err != nil {
-		return wba.MessageEventInfo{}
-	}
-	return msg
-}
-
-//database模块
-// //数据库部分允许字符串变量的读写操作，允许读取配置项操作
-
-type databaseInfo struct{}
-
-func (dbi *databaseInfo) varSet(app wba.AppInfo, datamap string, unit string, id string, key string, value string) {
-	database.Set(app.AppKey.Name, datamap, unit, id, key, value)
-}
-
-func (dbi *databaseInfo) SetUserVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string, value string) {
-	id := fmt.Sprintf("%d", msg.UserId)
-	dbi.varSet(app, app.AppKey.Name, "user", id, key, value)
-}
-
-func (dbi *databaseInfo) SetGroupVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string, value string) {
-	var id string
-	if msg.MessageType == "group" {
-		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
-	}
-	if msg.MessageType == "private" {
-		id = "user_" + fmt.Sprintf("%d", msg.UserId)
-	}
-	dbi.varSet(app, app.AppKey.Name, "group", id, key, value)
-}
-
-func (dbi *databaseInfo) SetOutUserVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string, value string) {
-	id := fmt.Sprintf("%d", msg.UserId)
-	dbi.varSet(app, datamap, "user", id, key, value)
-}
-
-func (dbi *databaseInfo) SetOutGroupVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string, value string) {
-	var id string
-	if msg.MessageType == "group" {
-		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
-	}
-	if msg.MessageType == "private" {
-		id = "user_" + fmt.Sprintf("%d", msg.UserId)
-	}
-	dbi.varSet(app, datamap, "group", id, key, value)
-}
-
-func (dbi *databaseInfo) UnsafelySetUserVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.AppKey.Name, "user", id, key, value)
-}
-
-func (dbi *databaseInfo) UnsafelySetGroupVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.AppKey.Name, "group", id, key, value)
-}
-
-func (dbi *databaseInfo) UnsafelySetGlobalVariable(app wba.AppInfo, id string, key string, value string) {
-	dbi.varSet(app, app.AppKey.Name, "global", id, key, value)
-}
-
-func (dbi *databaseInfo) UnsafelySetOutUserVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
-	dbi.varSet(app, datamap, "user", id, key, value)
-}
-
-func (dbi *databaseInfo) UnsafelySetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
-	dbi.varSet(app, datamap, "group", id, key, value)
-}
-
-func (dbi *databaseInfo) UnsafelySetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string, value string) {
-	dbi.varSet(app, datamap, "global", id, key, value)
-}
-
-func (dbi *databaseInfo) varGet(app wba.AppInfo, datamap string, unit string, id string, key string) (string, bool) {
-	res, ok := database.Get(app.AppKey.Name, datamap, unit, id, key, false)
-	if !ok {
-		return "", false
-	}
-	resStr, ok := res.(string)
-	if !ok {
-		return "", false
-	}
-	return resStr, true
-}
-
-func (dbi *databaseInfo) GetUserVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string) (string, bool) {
-	id := fmt.Sprintf("%d", msg.UserId)
-	return dbi.varGet(app, app.AppKey.Name, "user", id, key)
-}
-
-func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, msg wba.MessageEventInfo, key string) (string, bool) {
-	var id string
-	if msg.MessageType == "group" {
-		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
-	}
-	if msg.MessageType == "private" {
-		id = "user_" + fmt.Sprintf("%d", msg.UserId)
-	}
-	return dbi.varGet(app, app.AppKey.Name, "group", id, key)
-}
-
-func (dbi *databaseInfo) GetOutUserVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string) (string, bool) {
-	id := fmt.Sprintf("%d", msg.UserId)
-	return dbi.varGet(app, datamap, "user", id, key)
-}
-
-func (dbi *databaseInfo) GetOutGroupVariable(app wba.AppInfo, datamap string, msg wba.MessageEventInfo, key string) (string, bool) {
-	var id string
-	if msg.MessageType == "group" {
-		id = "group_" + fmt.Sprintf("%d", msg.GroupId)
-	}
-	if msg.MessageType == "private" {
-		id = "user_" + fmt.Sprintf("%d", msg.UserId)
-	}
-	return dbi.varGet(app, datamap, "group", id, key)
-}
-
-func (dbi *databaseInfo) UnsafelyGetUserVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.AppKey.Name, "user", id, key)
-}
-
-func (dbi *databaseInfo) UnsafelyGetGroupVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.AppKey.Name, "group", id, key)
-}
-
-func (dbi *databaseInfo) UnsafelyGetGlobalVariable(app wba.AppInfo, id string, key string) (string, bool) {
-	return dbi.varGet(app, app.AppKey.Name, "global", id, key)
-}
-
-func (dbi *databaseInfo) UnsafelyGetOutUserVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
-	return dbi.varGet(app, datamap, "user", id, key)
-}
-
-func (dbi *databaseInfo) UnsafelyGetOutGroupVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
-	return dbi.varGet(app, datamap, "group", id, key)
-}
-
-func (dbi *databaseInfo) UnsafelyGetOutGlobalVariable(app wba.AppInfo, datamap string, id string, key string) (string, bool) {
-	return dbi.varGet(app, datamap, "global", id, key)
-}
-
-func (dbi *databaseInfo) GetIntConfig(app wba.AppInfo, datamap string, key string) (int64, bool) {
-	res, ok := database.Get(app.AppKey.Name, datamap, "config", "number", key, true)
-	if !ok {
-		return 0, false
-	}
-	resInt, ok := res.(int64)
-	if !ok {
-		return 0, false
-	}
-	return resInt, true
-}
-
-func (dbi *databaseInfo) GetStringConfig(app wba.AppInfo, datamap string, key string) (string, bool) {
-	res, ok := database.Get(app.AppKey.Name, datamap, "config", "string", key, true)
-	if !ok {
-		return "", false
-	}
-	resStr, ok := res.(string)
-	if !ok {
-		return "", false
-	}
-	return resStr, true
-}
-
-func (dbi *databaseInfo) GetFloatConfig(app wba.AppInfo, datamap string, key string) (float64, bool) {
-	res, ok := database.Get(app.AppKey.Name, datamap, "config", "float", key, true)
-	if !ok {
-		return 0, false
-	}
-	resFloat, ok := res.(float64)
-	if !ok {
-		return 0, false
-	}
-	return resFloat, true
-}
-
-func (dbi *databaseInfo) GetIntSliceConfig(app wba.AppInfo, datamap string, key string) ([]int64, bool) {
-	res, ok := database.Get(app.AppKey.Name, datamap, "config", "number_slice", key, true)
-	if !ok {
-		return nil, false
-	}
-	resSlice, ok := res.([]int64)
-	if !ok {
-		return nil, false
-	}
-	return resSlice, true
-}
-
-func (dbi *databaseInfo) GetStringSliceConfig(app wba.AppInfo, datamap string, key string) ([]string, bool) {
-	res, ok := database.Get(app.AppKey.Name, datamap, "config", "string_slice", key, true)
-	if !ok {
-		return nil, false
-	}
-	resSlice, ok := res.([]string)
-	if !ok {
-		return nil, false
-	}
-	return resSlice, true
-}
-
-func (dbi *databaseInfo) UnsafelyCreatePublicDatamap(app wba.AppInfo, datamapId string) {
-	appName := app.AppKey.Name
-	database.CreatePublicDatamap(appName, datamapId)
-}
-
 // 文件管理模块
 //TODO: 文件管理模块待实现
 
@@ -1204,8 +934,7 @@ func (dbi *databaseInfo) UnsafelyCreatePublicDatamap(app wba.AppInfo, datamapId 
 
 //核心信息调用模块
 
-var AppApi apiInfo
-var DatabaseApi databaseInfo
+var ProtocolApi protocolAPI
 
 func GenerateUUID() (string, error) {
 	uuid := make([]byte, 16)

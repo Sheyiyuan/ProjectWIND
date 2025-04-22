@@ -1,5 +1,7 @@
 package wba
 
+import "strings"
+
 type AppInfo struct {
 	AppKey              AppKey
 	Author              string
@@ -64,6 +66,13 @@ func WithLevel(level uint8) AppInfoOption {
 	}
 }
 
+func toCamelCase(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToLower(s[:1]) + s[1:]
+}
+
 func NewApp(name string, version string, author string, opts ...AppInfoOption) AppInfo {
 	Ext := AppInfo{
 		AppKey: AppKey{
@@ -84,6 +93,15 @@ func NewApp(name string, version string, author string, opts ...AppInfoOption) A
 	for _, opt := range opts {
 		opt(&Ext)
 	}
+
+	// 添加JS风格方法
+	Ext.API = map[string]interface{}{
+		toCamelCase("NewCmd"):           Ext.NewCmd,
+		toCamelCase("AddCmd"):           Ext.AddCmd,
+		toCamelCase("NewScheduledTask"): Ext.NewScheduledTask,
+		toCamelCase("AddScheduledTask"): Ext.AddScheduledTask,
+	}
+
 	return Ext
 }
 
@@ -127,7 +145,7 @@ type AppKey struct {
 	Option   OptionLabel   `json:"option"`
 }
 
-// Priority 是一个整数类型，用于表示命令的优先级。只能是不小于1的整数。
+// Priority 是一个整数类型，用于表示命令的优先级。只能是不小于1且不大于4的整数。
 type Priority = uint8
 
 // VersionLabel 是一个字符串类型，用于表示版本标签。
@@ -142,15 +160,45 @@ type OptionLabel = string
 // SessionLabel 是一个字符串类型，用于表示聊天会话的标签，格式为[平台:类型-ID]，如"QQ:group-1145141919810"
 type SessionLabel = string
 
+// CmdSetLabel 是一个字符串类型，用于表示命令集的标签。
+type CmdSetLabel = string
+
+// CmdLabel 是一个字符串类型，用于表示命令的标签。
+type CmdLabel = string
+
 // CmdList 是一个字符串到 wba.Cmd 的映射，用于存储命令的列表。
 type CmdList = map[string]Cmd
 
+// SessionInfo 是一个结构体，用于存储会话信息。
+//
+// 字段:
+//   - Platform: 表示会话的平台，如"QQ"、"Telegram"等。
+//   - SessionType: 表示会话的类型，如"group"、"private"等。
+//   - SessionId: 表示会话的ID，如群号、私聊号等。
 type SessionInfo struct {
 	Platform    string
 	SessionType string
 	SessionId   int64
 }
 
+func (s *SessionInfo) Load(platform string, msg MessageEventInfo) SessionInfo {
+	s.Platform = platform
+	s.SessionType = msg.MessageType
+	if s.SessionType == "group" {
+		s.SessionId = msg.GroupId
+	}
+	if s.SessionType == "private" {
+		s.SessionId = msg.UserId
+	}
+	return *s
+}
+
+// VersionInfo 是一个结构体，用于存储版本信息。
+//
+// 字段:
+//   - BigVersion: 表示大版本号。
+//   - SmallVersion: 表示小版本号。
+//   - FixVersion: 表示修复版本号。
 type VersionInfo struct {
 	BigVersion   uint8
 	SmallVersion uint8
