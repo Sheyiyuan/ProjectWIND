@@ -4,7 +4,6 @@ import (
 	"ProjectWIND/LOG"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -80,25 +79,11 @@ func (this *Database) addDatamap(id string) {
 	this.Datamaps[id] = db
 }
 
-// func hash(word string) string {
-// 	hash, err := bcrypt.GenerateFromPassword([]byte(word), bcrypt.DefaultCost)
-// 	if err != nil {
-// 		LOG.Error("[Error]Error while hash password: %v", err)
-// 		return ""
-// 	}
-// 	return string(hash)
-// }
-
-// func hashCheck(word string, hash string) bool {
-// 	err := bcrypt.CompareHashAndPassword(hash, []byte(word))
-// 	return err == nil
-// }
-
 func folderCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		err := os.MkdirAll(filename, 0755)
 		if err != nil {
-			LOG.Fatal("[Error]Error occured while create folder: %v", err)
+			LOG.Fatal("创建文件夹时出错: %v", err)
 		}
 	}
 }
@@ -110,12 +95,12 @@ func fileCheck(filename string) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
 		if err != nil {
-			LOG.Fatal("[Error]Error occured while create file: %v", err)
+			LOG.Fatal("创建文件时出错: %v", err)
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.Fatal("[Error]Error occured while close file: %v", err)
+				LOG.Fatal("创建文件时出错: %v", err)
 			}
 		}(file)
 	}
@@ -125,12 +110,12 @@ func writeContent(f *os.File, str string) error {
 	// 写入内容到文件
 	if f == nil {
 		// log.Printf("[Error]file is nil")
-		LOG.Error("[Error]file is nil")
+		LOG.Error("文件不存在")
 		return errors.New("file is nil")
 	}
 	_, err := f.Write([]byte(str))
 	if err != nil {
-		LOG.Error("[Error]Error while write content to file: %v", err)
+		LOG.Error("无法写入到文件: %v", err)
 		return err
 	}
 	return nil
@@ -152,18 +137,18 @@ func getCorePassword() string {
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
 	if err != nil {
-		LOG.Error("[Error]Error while read file %s: %v", filename, err)
+		LOG.Error("读取文件时出错 %s: %v", filename, err)
 		return ""
 	}
 	config := make(map[string]string)
-	err = json.Unmarshal([]byte(dataJson), &config)
+	err = json.Unmarshal([]byte(dataJson), config)
 	if err != nil {
-		LOG.Error("[Error]Error while unmarshal data: %v", err)
+		LOG.Error("反序列化时出错: %v", err)
 		return ""
 	}
 	password, ok := config["password"]
 	if !ok {
-		LOG.Warn("[Warning]Password not found in core.json")
+		LOG.Warn("core.json中未找到配置密码项")
 		return ""
 	}
 	return password
@@ -173,13 +158,13 @@ func saveData(db *Database) error {
 	// 保存数据到文件
 	dataJson, err := json.Marshal(db)
 	if err != nil {
-		LOG.Error("[Error]:Error while marshal data: %v", err)
+		LOG.Error("序列化数据时出错: %v", err)
 		return err
 	}
 	filename := address
 	file, err := os.Create(filename)
 	if err != nil {
-		LOG.Error("[Error]:Error while create file %s: %v", filename, err)
+		LOG.Error("创建文件时出错 %s: %v", filename, err)
 		return err
 	}
 	writeContent(file, string(dataJson))
@@ -192,14 +177,12 @@ func loadData(db *Database) error {
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
 	if err != nil {
-		// log.Printf("[Error]:Error while read file %s: %v", filename, err)
-		LOG.Error("[Error]:Error while read file %s: %v", filename, err)
+		LOG.Error("读文件时出错 %s: %v", filename, err)
 		return err
 	}
 	err = json.Unmarshal([]byte(dataJson), db)
 	if err != nil {
-		// log.Printf("[Error]:Error while unmarshal data: %v", err)
-		LOG.Warn("[Warning]:Error while unmarshal data: %v", err)
+		LOG.Warn("反序列化数据时出错: %v", err)
 		return err
 	}
 	return nil
@@ -216,11 +199,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		dm = DB.Datamaps[datamap]
 	}
 	if !isAllowed && !isMaster && dm.Permission != "private" {
-		LOG.Warn("[Warning]:Permission denied")
+		LOG.Warn("访问权限不足")
 		return
 	}
 	if !isMaster && dm.Permission == "master" {
-		LOG.Warn("[Warning]:Permission denied")
+		LOG.Warn("访问权限不足")
 		return
 	}
 	switch unit {
@@ -229,52 +212,52 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		case "number":
 			valueInt64, ok := value.(int64) // 断言value为int64类型
 			if !ok {
-				LOG.Error("[Error]:Value cannot be asserted to int64")
+				LOG.Error("配置值无法被断言为int64类型")
 				return
 			}
 			dm.Configs.Number[key] = valueInt64 // 使用断言后的int64值
 		case "string":
 			valueStr, ok := value.(string) // 断言value为string类型
 			if !ok {
-				LOG.Error("[Error]:Value cannot be asserted to string")
+				LOG.Error("配置值无法被断言为string类型")
 				return
 			}
 			dm.Configs.String[key] = valueStr // 使用断言后的string值
 		case "float":
 			valueFloat64, ok := value.(float64) // 断言value为float64类型
 			if !ok {
-				LOG.Error("[Error]:Value cannot be asserted to float64")
+				LOG.Error("配置值无法被断言为float64类型")
 				return
 			}
 			dm.Configs.Float[key] = valueFloat64 // 使用断言后的float64值
 		case "number_slice":
 			valueInt64Slice, ok := value.([]int64) // 断言value为[]int64类型
 			if !ok {
-				LOG.Error("[Error]:Value cannot be asserted to []int64")
+				LOG.Error("配置值无法被断言为[]int64类型")
 				return
 			}
 			dm.Configs.Number_Slice[key] = valueInt64Slice // 使用断言后的[]int64值
 		case "string_slice":
 			valueStrSlice, ok := value.([]string) // 断言value为[]string类型
 			if !ok {
-				LOG.Error("[Error]:Value cannot be asserted to []string")
+				LOG.Error("配置值无法被断言为[]string类型")
 				return
 			}
 			dm.Configs.String_Slice[key] = valueStrSlice // 使用断言后的[]string值
 		case "hash":
 			valueStr, ok := value.(string) // 断言value为string类型
 			if !ok {
-				LOG.Error("[Error]:Value cannot be asserted to string")
+				LOG.Error("配置值无法被断言为string类型")
 				return
 			}
 			dm.Configs.Hash = valueStr // 使用断言后的string值
 		default:
-			LOG.Error("[Error]:Invalid id %s", id)
+			LOG.Error("不合法的配置项类型 %s", id)
 		}
 	case "user":
 		valueStr, ok := value.(string) // 断言value为string类型
 		if !ok {
-			LOG.Error("[Error]:Value cannot be asserted to string")
+			LOG.Error("变量值无法被断言为string类型")
 			return
 		}
 		user, ok := dm.Users[id]
@@ -292,7 +275,7 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	case "group":
 		valueStr, ok := value.(string) // 断言value为string类型
 		if !ok {
-			LOG.Error("[Error]:Value cannot be asserted to string")
+			LOG.Error("变量值无法被断言为string类型")
 			return
 		}
 		group, ok := dm.Groups[id]
@@ -310,7 +293,7 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 	case "global":
 		valueStr, ok := value.(string) // 断言value为string类型
 		if !ok {
-			LOG.Error("[Error]:Value cannot be asserted to string")
+			LOG.Error("变量值无法被断言为string类型")
 			return
 		}
 		global, ok := dm.Global[id]
@@ -326,22 +309,22 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		}
 		global.Data[key] = valueStr // 使用断言后的string值
 	default:
-		LOG.Error("[Error]:Invalid unit %s", unit)
+		LOG.Error("不合法的数据单元 %s", unit)
 	}
 }
 
 func dataGet(datamap string, unit string, id string, key string, isAllowed bool, isMaster bool) (interface{}, bool) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
-		LOG.Warn("[Warning]:Datamap %s not found", datamap)
+		LOG.Warn("数据表不存在 %s", datamap)
 		return "", false
 	}
 	if !isAllowed && !isMaster && dm.Permission != "private" {
-		LOG.Warn("[Warning]:Permission denied")
+		LOG.Warn("访问权限不足")
 		return "", false
 	}
 	if !isMaster && dm.Permission == "master" {
-		LOG.Warn("[Warning]:Permission denied")
+		LOG.Warn("访问权限不足")
 		return "", false
 	}
 	switch unit {
@@ -350,104 +333,104 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		case "number":
 			value, ok := dm.Configs.Number[key]
 			if !ok {
-				LOG.Warn("[Warning]:Config %s not found", key)
+				LOG.Warn("配置项不存在%s", key)
 				return 0, false
 			}
 			return value, true
 		case "string":
 			value, ok := dm.Configs.String[key]
 			if !ok {
-				LOG.Warn("[Warning]:Config %s not found", key)
+				LOG.Warn("配置项不存在%s", key)
 				return "", false
 			}
 			return value, true
 		case "float":
 			value, ok := dm.Configs.Float[key]
 			if !ok {
-				LOG.Warn("[Warning]:Config %s not found", key)
+				LOG.Warn("配置项不存在%s", key)
 				return 0.0, false
 			}
 			return value, true
 		case "number_slice":
 			value, ok := dm.Configs.Number_Slice[key]
 			if !ok {
-				LOG.Warn("[Warning]:Config %s not found", key)
+				LOG.Warn("配置项不存在%s", key)
 				return []int64{}, false
 			}
 			return value, true
 		case "string_slice":
 			value, ok := dm.Configs.String_Slice[key]
 			if !ok {
-				LOG.Warn("[Warning]:Config %s not found", key)
+				LOG.Warn("配置项不存在%s", key)
 				return []string{}, false
 			}
 			return value, true
 		case "hash":
 			return dm.Configs.Hash, true
 		default:
-			LOG.Error("[Error]:Invalid id %s", id)
+			LOG.Error("不合法的配置项类型 %s", id)
 			return "", false
 		}
 	case "user":
 		user, ok := dm.Users[id]
 		if !ok {
-			LOG.Warn("[Warning]:User %s not found", id)
+			LOG.Warn("用户 %s 不存在", id)
 			return "", false
 		}
 		if user.Data == nil {
-			LOG.Warn("[Warning]:User %s's data is nil", id)
+			LOG.Warn("用户 %s 的数据显示为nil", id)
 			return "", false
 		}
 		value, ok := user.Data[key]
 		if !ok {
-			LOG.Warn("[Warning]:User %s's data %s not found", id, key)
+			LOG.Warn("用户 %s 的数据中键 %s 不存在", id, key)
 			return "", false
 		}
 		return value, true
 	case "group":
 		group, ok := dm.Groups[id]
 		if !ok {
-			LOG.Warn("[Warning]:Group %s not found", id)
+			LOG.Warn("群组 %s 的数据不存在", id)
 			return "", false
 		}
 		if group.Data == nil {
-			LOG.Warn("[Warning]:Group %s's data is nil", id)
+			LOG.Warn("群组 %s 的数据显示为nil", id)
 			return "", false
 		}
 		value, ok := group.Data[key]
 		if !ok {
-			LOG.Warn("[Warning]:Group %s's data %s not found", id, key)
+			LOG.Warn("群组 %s 的数据中键 %s 不存在", id, key)
 			return "", false
 		}
 		return value, true
 	case "global":
 		global, ok := dm.Global[id]
 		if !ok {
-			LOG.Warn("[Warning]:Global %s not found", id)
+			LOG.Warn("全局变量 %s 的数据不存在", id)
 			return "", false
 		}
 		if global.Data == nil {
-			LOG.Warn("[Warning]:Global data of %s is nil", id)
+			LOG.Warn("全局变量 %s 的数据显示为nil", id)
 			return "", false
 		}
 		value, ok := global.Data[key]
 		if !ok {
-			LOG.Warn("[Warning]:Global data of %s's %s not found", id, key)
+			LOG.Warn("全局变量 %s 的数据中键 %s 不存在", id, key)
 			return "", false
 		}
 		return value, true
 	default:
-		LOG.Error("[Error]:Invalid unit %s", unit)
+		LOG.Error("Invalid unit %s", unit)
 		return "", false
 	}
 }
 
 func initializeDatabase() *Database {
 	// 启动并检查程序
-	LOG.Info("Starting database ...")
+	LOG.Info("正在启动数据库")
 	db := newDatabase()
 	loadData(&db)
-	LOG.Info("Database started successfully.")
+	LOG.Info("数据库启动完成")
 	return &db
 }
 
@@ -459,7 +442,7 @@ func Start() {
 	signal.Notify(dataChan, syscall.SIGINT, syscall.SIGTERM)
 
 	// 定义一个Ticker用于每1小时触发一次保存操作
-	saveTicker := time.NewTicker(600 * time.Second)
+	saveTicker := time.NewTicker(3600 * time.Second)
 	defer saveTicker.Stop()
 
 	// 启动一个goroutine等待信号和定时保存
@@ -468,13 +451,12 @@ func Start() {
 			select {
 			case <-dataChan:
 				// 接收到信号，保存数据并退出程序
-				fmt.Println("")
-				LOG.Info("Received signal, saving data and exiting...")
+				LOG.Info("关闭中，正在保存数据")
 				saveData(DB)
 				os.Exit(0)
 			case <-saveTicker.C:
 				// 定时保存数据
-				LOG.Info("Saving data automatically...")
+				LOG.Info("自动保存数据")
 				saveData(DB)
 			}
 		}
@@ -492,11 +474,12 @@ func CreatePublicDatamap(appName string, id string) {
 	}
 	datahash, ok := dataGet(appName, "config", "hash", "", true, true)
 	if !ok {
-		LOG.Error("[Error]:Error while get hash of %s", appName)
+		// LOG.Error("[Error]:Error while get hash of %s", appName)
+		LOG.Error("获取应用数据表 %s 的密钥时出错", appName)
 		return
 	}
 	if hash != datahash {
-		LOG.Warn("[Warning]:App %s is not allowed to create public datamap", appName)
+		LOG.Warn("应用 %s 没有创建公开数据表的权限", appName)
 		return
 	}
 
@@ -507,11 +490,11 @@ func CreatePublicDatamap(appName string, id string) {
 		db.Permission = "public"
 		DB.Datamaps[id] = db
 	} else {
-		LOG.Info("[Info]:Datamap %s already exists", id)
+		LOG.Info("数据表 %s 已经存在", id)
 	}
 }
 
-func CreateMasterDatamap(id string) {
+func MasterCreatePublicDatamap(id string) {
 	// 创建核心数据表
 	db, ok := DB.Datamaps[id]
 	if !ok {
@@ -519,7 +502,19 @@ func CreateMasterDatamap(id string) {
 		db.Permission = "master"
 		DB.Datamaps[id] = db
 	} else {
-		LOG.Info("[Info]:Datamap %s already exists", id)
+		LOG.Info("数据表 %s 已经存在", id)
+	}
+}
+
+func MasterCreateMasterDatamap(id string) {
+	// 创建公开数据表
+	db, ok := DB.Datamaps[id]
+	if !ok {
+		db = newDatamap(id)
+		db.Permission = "public"
+		DB.Datamaps[id] = db
+	} else {
+		LOG.Info("数据表 %s 已经存在", id)
 	}
 }
 
@@ -537,12 +532,12 @@ func Get(appName string, datamap string, unit string, id string, key string, isG
 	// 查询数据
 	if unit == "config" && id == "hash" {
 		// app不允许访问hash数据
-		LOG.Error("[Error]:App %s is not allowed to access hash data", appName)
+		LOG.Error("应用 %s 不允许访问数据库密钥", appName)
 		return "", false
 	}
 	if !isGettingConfig && unit == "config" {
 		// 不允许在非config数据表中访问config数据
-		LOG.Error("[Error]:App %s is not allowed to access config data", appName)
+		LOG.Error("应用 %s 不能在常规读写中访问配置项信息，请使用配置项读取功能", appName)
 		return "", false
 	}
 	if appName != datamap {
@@ -554,10 +549,10 @@ func Get(appName string, datamap string, unit string, id string, key string, isG
 		}
 		datahash, ok := dataGet(appName, "config", "hash", "", true, true)
 		if !ok {
-			LOG.Error("[Error]:Error while get hash of %s", appName)
+			LOG.Error("获取应用数据表 %s 的密钥时出错", appName)
 		}
 		if hash != datahash {
-			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
+			LOG.Warn("应用 %s 未被允许获取数据表 %s 的信息", appName, datamap)
 			return dataGet(appName, unit, id, key, false, false)
 		}
 
@@ -569,7 +564,7 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 	// 修改数据
 	if unit == "config" {
 		// app不允许修改config数据
-		LOG.Error("[Error]:App %s is not allowed to modify config data", appName)
+		LOG.Error("应用 %s 不允许修改配置项信息", appName)
 		return
 	}
 	if appName != datamap {
@@ -581,10 +576,10 @@ func Set(appName string, datamap string, unit string, id string, key string, val
 		}
 		datahash, ok := dataGet(appName, "config", "hash", "", true, true)
 		if !ok {
-			LOG.Error("[Error]:Error while get hash of %s", appName)
+			LOG.Error("获取应用数据表 %s 的密钥时出错", appName)
 		}
 		if hash != datahash {
-			LOG.Warn("[Warning]:App %s is not allowed to access data of %s", appName, datamap)
+			LOG.Warn("应用 %s 未被允许修改数据表 %s 的信息", appName, datamap)
 			dataSet(appName, unit, id, key, value, false, false)
 		}
 	}
