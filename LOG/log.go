@@ -9,7 +9,22 @@ import (
 	"runtime"
 )
 
+var logLevel = 2
+
+func SetLogLevel(level int) {
+	if level < 0 {
+		level = 0
+	}
+	if level > 5 {
+		level = 5
+	}
+	logLevel = level
+}
+
 func Trace(text string, msg ...interface{}) {
+	if logLevel > 0 {
+		return
+	}
 	var pc uintptr
 	var file string
 	var line int
@@ -27,25 +42,40 @@ func Trace(text string, msg ...interface{}) {
 }
 
 func Debug(text string, msg ...interface{}) {
+	if logLevel > 1 {
+		return
+	}
 	log.Printf("[Debug]  %s\n", fmt.Sprintf(text, msg...))
 }
 
 func Info(text string, msg ...interface{}) {
+	if logLevel > 2 {
+		return
+	}
 	msgText := fmt.Sprintf(text, msg...)
 	log.Println("[Info]  ", msgText)
 }
 
 func Notice(text string, msg ...interface{}) {
+	if logLevel > 3 {
+		return
+	}
 	msgText := fmt.Sprintf(text, msg...)
 	log.Println("[Notice]", msgText)
 }
 
 func Warn(text string, msg ...interface{}) {
+	if logLevel > 4 {
+		return
+	}
 	msgText := fmt.Sprintf(text, msg...)
 	log.Println("[Warn]  ", msgText)
 }
 
 func Error(text string, msg ...interface{}) {
+	if logLevel > 5 {
+		return
+	}
 	msgText := fmt.Sprintf(text, msg...)
 	log.Println("[Error] ", msgText)
 }
