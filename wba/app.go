@@ -93,23 +93,23 @@ func NewApp(name string, version string, author string, opts ...AppInfoOption) A
 	for _, opt := range opts {
 		opt(&Ext)
 	}
-
-	// 添加JS风格方法
-	Ext.API = map[string]interface{}{
-		toCamelCase("NewCmd"):           Ext.NewCmd,
-		toCamelCase("AddCmd"):           Ext.AddCmd,
-		toCamelCase("NewScheduledTask"): Ext.NewScheduledTask,
-		toCamelCase("AddScheduledTask"): Ext.AddScheduledTask,
-	}
-
 	return Ext
 }
 
-func (ai *AppInfo) NewCmd(name string, description string, solve func(args []string, msg MessageEventInfo)) Cmd {
+//func (ai *AppInfo) NewCmd(name string, description string, solve func(args []string, msg MessageEventInfo)) Cmd {
+//	return Cmd{
+//		Name:   name,
+//		Desc:   description,
+//		Solve:  solve,
+//		AppKey: ai.AppKey,
+//	}
+//}
+
+func (ai *AppInfo) NewCmd() Cmd {
 	return Cmd{
-		Name:   name,
-		Desc:   description,
-		Solve:  solve,
+		Name:   "",
+		Desc:   "",
+		Solve:  nil,
 		AppKey: ai.AppKey,
 	}
 }
