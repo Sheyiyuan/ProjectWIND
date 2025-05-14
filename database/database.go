@@ -3,7 +3,7 @@ package database
 import (
 	"ProjectWIND/LOG"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -13,6 +13,11 @@ import (
 
 const address = "./data/database/datamaps.wdb"
 const core = "./data/core.json"
+
+type Errno struct {
+	Code      int
+	Condition string
+}
 
 type unit struct {
 	Id   string
@@ -45,6 +50,24 @@ type Database struct {
 	Datamaps map[string]Datamap
 }
 
+func (eno *Errno) Log() {
+	// 记录错误日志
+	switch eno.Code / 100 {
+	case 1:
+		LOG.Fatal(eno.Condition)
+	case 2:
+		LOG.Error(eno.Condition)
+	case 3:
+		LOG.Warn(eno.Condition)
+	case 4:
+		LOG.Info(eno.Condition)
+	case 5:
+		LOG.Notice(eno.Condition)
+	case 6:
+		LOG.Debug(eno.Condition)
+	}
+}
+
 func newDatamap(id string) Datamap {
 	// 创建数据表
 	db := &Datamap{
@@ -73,124 +96,120 @@ func newDatabase() Database {
 	return *db
 }
 
-func (this *Database) addDatamap(id string) {
+func (dbh *Database) addDatamap(id string) {
 	// 创建新数据表
 	db := newDatamap(id)
-	this.Datamaps[id] = db
+	dbh.Datamaps[id] = db
 }
 
-func folderCheck(filename string) {
+func folderCheck(filename string) (Error Errno) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		err := os.MkdirAll(filename, 0755)
 		if err != nil {
-			LOG.Fatal("创建文件夹时出错: %v", err)
+			return Errno{101, fmt.Sprintf("创建文件夹时出错：%v", err)}
 		}
 	}
+	return Errno{0, ""}
 }
 
-func fileCheck(filename string) {
+func fileCheck(filename string) (Error Errno) {
 	// 检查并创建文件
 	dir := filepath.Dir(filename)
 	folderCheck(dir)
+	eno := Errno{0, ""}
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
 		if err != nil {
-			LOG.Fatal("创建文件时出错: %v", err)
+			return Errno{101, fmt.Sprintf("创建文件时出错: %v", err)}
 		}
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				LOG.Fatal("创建文件时出错: %v", err)
+				eno = Errno{302, fmt.Sprintf("关闭文件时出错: %v", err)}
 			}
 		}(file)
 	}
+	return eno
 }
 
-func writeContent(f *os.File, str string) error {
+func writeContent(f *os.File, str string) (errno Errno) {
 	// 写入内容到文件
 	if f == nil {
-		// log.Printf("[Error]file is nil")
-		LOG.Error("文件不存在")
-		return errors.New("file is nil")
+		return Errno{101, "文件不存在"}
 	}
 	_, err := f.Write([]byte(str))
 	if err != nil {
-		LOG.Error("无法写入到文件: %v", err)
-		return err
+		return Errno{101, fmt.Sprintf("无法写入到文件: %v", err)}
 	}
-	return nil
+	return Errno{0, ""}
 }
 
-func printContent(file string) (string, error) {
+func printContent(file string) (text string, errno Errno) {
 	// 读取文件内容
 	bytes, err := os.ReadFile(file)
 	if err == nil {
-		return string(bytes), nil
+		return string(bytes), Errno{0, ""}
 	} else {
-		return "", err
+		return "", Errno{101, fmt.Sprintf("读取文件时出错: %v", err)}
 	}
 }
 
-func getCorePassword() string {
+func getCorePassword() (pass string, errno Errno) {
 	// 获取核心密码
 	filename := core
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
-	if err != nil {
-		LOG.Error("读取文件时出错 %s: %v", filename, err)
-		return ""
+	if err.Code != 0 {
+		return "", Errno{101, fmt.Sprintf("读取文件时出错 %s: %v", filename, err)}
 	}
 	config := make(map[string]string)
-	err = json.Unmarshal([]byte(dataJson), config)
-	if err != nil {
-		LOG.Error("反序列化时出错: %v", err)
-		return ""
+	err2 := json.Unmarshal([]byte(dataJson), config)
+	if err2 != nil {
+		return "", Errno{201, fmt.Sprintf("反序列化时出错: %v", err2)}
 	}
 	password, ok := config["password"]
 	if !ok {
-		LOG.Warn("core.json中未找到配置密码项")
-		return ""
+		return "", Errno{601, "core.json中未找到配置密码项"}
 	}
-	return password
+	return password, Errno{0, ""}
 }
 
-func saveData(db *Database) error {
+func saveData(db *Database) (errno Errno) {
 	// 保存数据到文件
 	dataJson, err := json.Marshal(db)
 	if err != nil {
-		LOG.Error("序列化数据时出错: %v", err)
-		return err
+		return Errno{201, fmt.Sprintf("序列化数据时出错: %v", err)}
 	}
 	filename := address
 	file, err := os.Create(filename)
 	if err != nil {
-		LOG.Error("创建文件时出错 %s: %v", filename, err)
-		return err
+		return Errno{101, fmt.Sprintf("创建文件时出错 %s: %v", filename, err)}
 	}
-	writeContent(file, string(dataJson))
-	return nil
+	err2 := writeContent(file, string(dataJson))
+	if err2.Code != 0 {
+		return err2
+	}
+	return Errno{0, ""}
 }
 
-func loadData(db *Database) error {
+func loadData(db *Database) (errno Errno) {
 	// 读取配置文件
 	filename := address
 	fileCheck(filename)
 	dataJson, err := printContent(filename)
-	if err != nil {
-		LOG.Error("读文件时出错 %s: %v", filename, err)
+	if err.Code != 0 {
 		return err
 	}
-	err = json.Unmarshal([]byte(dataJson), db)
-	if err != nil {
-		LOG.Warn("反序列化数据时出错: %v", err)
-		return err
+	err2 := json.Unmarshal([]byte(dataJson), db)
+	if err2 != nil {
+		return Errno{201, fmt.Sprintf("反序列化数据时出错: %v", err2)}
 	}
-	return nil
+	return Errno{0, ""}
 }
 
 var DB *Database
 
-func dataSet(datamap string, unit string, id string, key string, value interface{}, isAllowed bool, isMaster bool) {
+func dataSet(datamap string, unit string, id string, key string, value interface{}, isAllowed bool, isMaster bool) (errno Errno) {
 	// 修改数据
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
@@ -199,66 +218,57 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		dm = DB.Datamaps[datamap]
 	}
 	if !isAllowed && !isMaster && dm.Permission != "private" {
-		LOG.Warn("访问权限不足")
-		return
+		return Errno{301, "访问权限不足"}
 	}
 	if !isMaster && dm.Permission == "master" {
-		LOG.Warn("访问权限不足")
-		return
+		return Errno{301, "访问权限不足"}
 	}
 	switch unit {
 	case "config":
 		switch id {
 		case "number":
-			valueInt64, ok := value.(int64) // 断言value为int64类型
+			valueInt64, ok := value.(int64)
 			if !ok {
-				LOG.Error("配置值无法被断言为int64类型")
-				return
+				return Errno{303, "设置的配置值无法被断言为int64类型"}
 			}
-			dm.Configs.Number[key] = valueInt64 // 使用断言后的int64值
+			dm.Configs.Number[key] = valueInt64
 		case "string":
-			valueStr, ok := value.(string) // 断言value为string类型
+			valueStr, ok := value.(string)
 			if !ok {
-				LOG.Error("配置值无法被断言为string类型")
-				return
+				return Errno{303, "设置的配置值无法被断言为string类型"}
 			}
-			dm.Configs.String[key] = valueStr // 使用断言后的string值
+			dm.Configs.String[key] = valueStr
 		case "float":
-			valueFloat64, ok := value.(float64) // 断言value为float64类型
+			valueFloat64, ok := value.(float64)
 			if !ok {
-				LOG.Error("配置值无法被断言为float64类型")
-				return
+				return Errno{303, "设置的配置值无法被断言为float64类型"}
 			}
-			dm.Configs.Float[key] = valueFloat64 // 使用断言后的float64值
+			dm.Configs.Float[key] = valueFloat64
 		case "number_slice":
-			valueInt64Slice, ok := value.([]int64) // 断言value为[]int64类型
+			valueInt64Slice, ok := value.([]int64)
 			if !ok {
-				LOG.Error("配置值无法被断言为[]int64类型")
-				return
+				return Errno{303, "设置的配置值无法被断言为[]int64类型"}
 			}
-			dm.Configs.Number_Slice[key] = valueInt64Slice // 使用断言后的[]int64值
+			dm.Configs.Number_Slice[key] = valueInt64Slice
 		case "string_slice":
-			valueStrSlice, ok := value.([]string) // 断言value为[]string类型
+			valueStrSlice, ok := value.([]string)
 			if !ok {
-				LOG.Error("配置值无法被断言为[]string类型")
-				return
+				return Errno{303, "设置的配置值无法被断言为[]string类型"}
 			}
-			dm.Configs.String_Slice[key] = valueStrSlice // 使用断言后的[]string值
+			dm.Configs.String_Slice[key] = valueStrSlice
 		case "hash":
-			valueStr, ok := value.(string) // 断言value为string类型
+			valueStr, ok := value.(string)
 			if !ok {
-				LOG.Error("配置值无法被断言为string类型")
-				return
+				return Errno{303, "设置的配置值无法被断言为string类型"}
 			}
-			dm.Configs.Hash = valueStr // 使用断言后的string值
+			dm.Configs.Hash = valueStr
 		default:
-			LOG.Error("不合法的配置项类型 %s", id)
+			return Errno{304, "不合法的配置项类型"}
 		}
 	case "user":
-		valueStr, ok := value.(string) // 断言value为string类型
+		valueStr, ok := value.(string)
 		if !ok {
-			LOG.Error("变量值无法被断言为string类型")
-			return
+			return Errno{303, "变量值无法被断言为string类型"}
 		}
 		user, ok := dm.Users[id]
 		if !ok {
@@ -271,12 +281,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		if user.Data == nil {
 			user.Data = make(map[string]string)
 		}
-		user.Data[key] = valueStr // 使用断言后的string值
+		user.Data[key] = valueStr
 	case "group":
-		valueStr, ok := value.(string) // 断言value为string类型
+		valueStr, ok := value.(string)
 		if !ok {
-			LOG.Error("变量值无法被断言为string类型")
-			return
+			return Errno{303, "变量值无法被断言为string类型"}
 		}
 		group, ok := dm.Groups[id]
 		if !ok {
@@ -289,12 +298,11 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		if group.Data == nil {
 			group.Data = make(map[string]string)
 		}
-		group.Data[key] = valueStr // 使用断言后的string值
+		group.Data[key] = valueStr
 	case "global":
-		valueStr, ok := value.(string) // 断言value为string类型
+		valueStr, ok := value.(string)
 		if !ok {
-			LOG.Error("变量值无法被断言为string类型")
-			return
+			return Errno{303, "变量值无法被断言为string类型"}
 		}
 		global, ok := dm.Global[id]
 		if !ok {
@@ -309,23 +317,21 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		}
 		global.Data[key] = valueStr // 使用断言后的string值
 	default:
-		LOG.Error("不合法的数据单元 %s", unit)
+		return Errno{304, "不合法的数据单元"}
 	}
+	return Errno{0, ""}
 }
 
-func dataGet(datamap string, unit string, id string, key string, isAllowed bool, isMaster bool) (interface{}, bool) {
+func dataGet(datamap string, unit string, id string, key string, isAllowed bool, isMaster bool) (res interface{}, errno Errno) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
-		LOG.Warn("数据表不存在 %s", datamap)
-		return "", false
+		return "", Errno{601, fmt.Sprintf("数据表 %s 不存在", datamap)}
 	}
 	if !isAllowed && !isMaster && dm.Permission != "private" {
-		LOG.Warn("访问权限不足")
-		return "", false
+		return "", Errno{301, "访问权限不足"}
 	}
 	if !isMaster && dm.Permission == "master" {
-		LOG.Warn("访问权限不足")
-		return "", false
+		return "", Errno{301, "访问权限不足"}
 	}
 	switch unit {
 	case "config":
@@ -333,95 +339,79 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		case "number":
 			value, ok := dm.Configs.Number[key]
 			if !ok {
-				LOG.Warn("配置项不存在%s", key)
-				return 0, false
+				return 0, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
-			return value, true
+			return value, Errno{0, ""}
 		case "string":
 			value, ok := dm.Configs.String[key]
 			if !ok {
-				LOG.Warn("配置项不存在%s", key)
-				return "", false
+				return "", Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
-			return value, true
+			return value, Errno{0, ""}
 		case "float":
 			value, ok := dm.Configs.Float[key]
 			if !ok {
-				LOG.Warn("配置项不存在%s", key)
-				return 0.0, false
+				return 0.0, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
-			return value, true
+			return value, Errno{0, ""}
 		case "number_slice":
 			value, ok := dm.Configs.Number_Slice[key]
 			if !ok {
-				LOG.Warn("配置项不存在%s", key)
-				return []int64{}, false
+				return []int64{}, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
-			return value, true
+			return value, Errno{0, ""}
 		case "string_slice":
 			value, ok := dm.Configs.String_Slice[key]
 			if !ok {
-				LOG.Warn("配置项不存在%s", key)
-				return []string{}, false
+				return []string{}, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
-			return value, true
+			return value, Errno{0, ""}
 		case "hash":
-			return dm.Configs.Hash, true
+			return dm.Configs.Hash, Errno{0, ""}
 		default:
-			LOG.Error("不合法的配置项类型 %s", id)
-			return "", false
+			return "", Errno{304, "不合法的配置项类型"}
 		}
 	case "user":
 		user, ok := dm.Users[id]
 		if !ok {
-			LOG.Warn("用户 %s 不存在", id)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("用户 %s 不存在", id)}
 		}
 		if user.Data == nil {
-			LOG.Warn("用户 %s 的数据显示为nil", id)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("用户 %s 的数据显示为nil", id)}
 		}
 		value, ok := user.Data[key]
 		if !ok {
-			LOG.Warn("用户 %s 的数据中键 %s 不存在", id, key)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("用户 %s 的数据中键 %s 不存在", id, key)}
 		}
-		return value, true
+		return value, Errno{0, ""}
 	case "group":
 		group, ok := dm.Groups[id]
 		if !ok {
-			LOG.Warn("群组 %s 的数据不存在", id)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("群组 %s 不存在", id)}
 		}
 		if group.Data == nil {
-			LOG.Warn("群组 %s 的数据显示为nil", id)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("群组 %s 的数据显示为nil", id)}
 		}
 		value, ok := group.Data[key]
 		if !ok {
-			LOG.Warn("群组 %s 的数据中键 %s 不存在", id, key)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("群组 %s 的数据中键 %s 不存在", id, key)}
 		}
-		return value, true
+		return value, Errno{0, ""}
 	case "global":
 		global, ok := dm.Global[id]
 		if !ok {
-			LOG.Warn("全局变量 %s 的数据不存在", id)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("全局变量 %s 不存在", id)}
 		}
 		if global.Data == nil {
-			LOG.Warn("全局变量 %s 的数据显示为nil", id)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("全局变量 %s 的数据显示为nil", id)}
 		}
 		value, ok := global.Data[key]
 		if !ok {
-			LOG.Warn("全局变量 %s 的数据中键 %s 不存在", id, key)
-			return "", false
+			return "", Errno{601, fmt.Sprintf("全局变量 %s 的数据中键 %s 不存在", id, key)}
 		}
-		return value, true
+		return value, Errno{0, ""}
 	default:
-		LOG.Error("Invalid unit %s", unit)
-		return "", false
+		return "", Errno{304, "不合法的数据单元"}
 	}
 }
 
@@ -462,25 +452,38 @@ func Start() {
 		}
 	}()
 
-	select {} // 阻塞
+	select {}
 }
 
-func CreatePublicDatamap(appName string, id string) {
+// 修改数据表权限（核心）
+func MasterSetDatamapPermission(datamap string, premission string) {
+	db, ok := DB.Datamaps[datamap]
+	if !ok {
+		eno := Errno{601, fmt.Sprintf("数据表 %s 不存在", datamap)}
+		eno.Log()
+		return
+	}
+	db.Permission = premission
+	DB.Datamaps[datamap] = db
+}
+
+func CreatePublicDatamap(appName string, id string) (errno Errno) {
 	// 查询权限
-	hash := getCorePassword()
+	hash, eno := getCorePassword()
+	if eno.Code != 0 {
+		return eno
+	}
 	if hash == "" {
 		// 删除数据表哈希
 		dataSet(appName, "config", "hash", "", "", true, true)
 	}
-	datahash, ok := dataGet(appName, "config", "hash", "", true, true)
-	if !ok {
-		// LOG.Error("[Error]:Error while get hash of %s", appName)
-		LOG.Error("获取应用数据表 %s 的密钥时出错", appName)
-		return
+	datahash, eno := dataGet(appName, "config", "hash", "", true, true)
+	if eno.Code != 0 {
+		return eno
 	}
 	if hash != datahash {
-		LOG.Warn("应用 %s 没有创建公开数据表的权限", appName)
-		return
+		eno := Errno{301, "应用没有创建公开数据表的权限"}
+		return eno
 	}
 
 	// 创建公开数据表
@@ -490,8 +493,10 @@ func CreatePublicDatamap(appName string, id string) {
 		db.Permission = "public"
 		DB.Datamaps[id] = db
 	} else {
-		LOG.Info("数据表 %s 已经存在", id)
+		eno := Errno{601, fmt.Sprintf("数据表 %s 已经存在", id)}
+		return eno
 	}
+	return Errno{0, ""}
 }
 
 func MasterCreatePublicDatamap(id string) {
@@ -502,7 +507,8 @@ func MasterCreatePublicDatamap(id string) {
 		db.Permission = "master"
 		DB.Datamaps[id] = db
 	} else {
-		LOG.Info("数据表 %s 已经存在", id)
+		eno := Errno{601, fmt.Sprintf("数据表 %s 已经存在", id)}
+		eno.Log()
 	}
 }
 
@@ -514,74 +520,104 @@ func MasterCreateMasterDatamap(id string) {
 		db.Permission = "public"
 		DB.Datamaps[id] = db
 	} else {
-		LOG.Info("数据表 %s 已经存在", id)
+		eno := Errno{601, fmt.Sprintf("数据表 %s 已经存在", id)}
+		eno.Log()
 	}
 }
 
 // 修改数据（核心）
 func MasterSet(datamap string, unit string, id string, key string, value interface{}) {
-	dataSet(datamap, unit, id, key, value, true, true)
+	eno := dataSet(datamap, unit, id, key, value, true, true)
+	if eno.Code != 0 {
+		eno.Log()
+	}
 }
 
 // 查询数据（核心）
 func MasterGet(datamap string, unit string, id string, key string) (interface{}, bool) {
-	return dataGet(datamap, unit, id, key, true, true)
+	val, eno := dataGet(datamap, unit, id, key, true, true)
+	if eno.Code != 0 {
+		eno.Log()
+		return "", false
+	}
+	return val, true
 }
 
-func Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (interface{}, bool) {
+func Get(appName string, datamap string, unit string, id string, key string, isGettingConfig bool) (value interface{}, errno Errno) {
 	// 查询数据
 	if unit == "config" && id == "hash" {
 		// app不允许访问hash数据
-		LOG.Error("应用 %s 不允许访问数据库密钥", appName)
-		return "", false
+		eno := Errno{301, fmt.Sprintf("应用 %s 不允许访问配置项信息", appName)}
+		eno.Log()
 	}
 	if !isGettingConfig && unit == "config" {
 		// 不允许在非config数据表中访问config数据
-		LOG.Error("应用 %s 不能在常规读写中访问配置项信息，请使用配置项读取功能", appName)
-		return "", false
+		eno := Errno{301, fmt.Sprintf("应用 %s 不能在常规读写中访问配置项信息，请使用配置项读取功能", appName)}
+		eno.Log()
 	}
 	if appName != datamap {
 		// 需要master密码来访问其他app的数据
-		hash := getCorePassword()
+		hash, eno := getCorePassword()
+		if eno.Code != 0 {
+			return "", eno
+		}
 		if hash == "" {
 			// 删除数据表哈希
 			dataSet(appName, "config", "hash", "", "", true, true)
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", true, true)
-		if !ok {
-			LOG.Error("获取应用数据表 %s 的密钥时出错", appName)
+		datahash, eno := dataGet(appName, "config", "hash", "", true, true)
+		if eno.Code != 0 {
+			eno.Log()
 		}
 		if hash != datahash {
-			LOG.Warn("应用 %s 未被允许获取数据表 %s 的信息", appName, datamap)
-			return dataGet(appName, unit, id, key, false, false)
+			value, eno := dataGet(appName, unit, id, key, false, false)
+			if eno.Code != 0 {
+				return value, eno
+			}
+			return value, Errno{0, ""}
 		}
-
 	}
-	return dataGet(appName, unit, id, key, true, true)
+	value, eno := dataGet(appName, unit, id, key, true, false)
+	if eno.Code != 0 {
+		return value, eno
+	}
+	return value, Errno{0, ""}
 }
 
-func Set(appName string, datamap string, unit string, id string, key string, value interface{}) {
+func Set(appName string, datamap string, unit string, id string, key string, value interface{}) (errno Errno) {
 	// 修改数据
 	if unit == "config" {
 		// app不允许修改config数据
-		LOG.Error("应用 %s 不允许修改配置项信息", appName)
-		return
+		return Errno{301, fmt.Sprintf("应用 %s 不允许修改配置项信息", appName)}
 	}
 	if appName != datamap {
 		// 需要master密码来访问其他app的数据
-		hash := getCorePassword()
+		hash, eno := getCorePassword()
+		if eno.Code != 0 {
+			return eno
+		}
 		if hash == "" {
 			// 删除数据表哈希
-			dataSet(appName, "config", "hash", "", "", true, true)
+			eno := dataSet(appName, "config", "hash", "", "", true, true)
+			if eno.Code != 0 {
+				return eno
+			}
 		}
-		datahash, ok := dataGet(appName, "config", "hash", "", true, true)
-		if !ok {
-			LOG.Error("获取应用数据表 %s 的密钥时出错", appName)
+		datahash, eno := dataGet(appName, "config", "hash", "", true, true)
+		if eno.Code != 0 {
+			return eno
 		}
 		if hash != datahash {
-			LOG.Warn("应用 %s 未被允许修改数据表 %s 的信息", appName, datamap)
-			dataSet(appName, unit, id, key, value, false, false)
+			eno := dataSet(appName, unit, id, key, value, false, false)
+			if eno.Code != 0 {
+				return eno
+			}
+			return Errno{0, ""}
 		}
 	}
-	dataSet(appName, unit, id, key, value, true, false)
+	eno := dataSet(appName, unit, id, key, value, true, false)
+	if eno.Code != 0 {
+		return eno
+	}
+	return Errno{0, ""}
 }
