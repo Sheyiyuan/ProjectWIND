@@ -250,7 +250,7 @@ type WindStandardDataBaseAPI interface {
 	// - msg: 消息事件信息。
 	// - key: 变量名称。
 	// - value: 变量值。
-	SetUserVariable(app AppInfo, msg MessageEventInfo, key string, value string)
+	SetUserVariable(app AppInfo, msg MessageEventInfo, key string, value string) bool
 
 	// SetGroupVariable 设置群组变量
 	// 参数：
@@ -258,7 +258,7 @@ type WindStandardDataBaseAPI interface {
 	// - msg: 消息事件信息。
 	// - key: 变量名称。
 	// - value: 变量值。
-	SetGroupVariable(app AppInfo, msg MessageEventInfo, key string, value string)
+	SetGroupVariable(app AppInfo, msg MessageEventInfo, key string, value string) bool
 
 	// SetOutUserVariable  [需要master权限]设置其他数据库中的用户变量
 	// 参数：
@@ -267,7 +267,7 @@ type WindStandardDataBaseAPI interface {
 	// - key: 变量名称。
 	// - value: 变量值。
 	// - datamap: 数据表名称。
-	SetOutUserVariable(app AppInfo, datamap string, msg MessageEventInfo, key string, value string)
+	SetOutUserVariable(app AppInfo, datamap string, msg MessageEventInfo, key string, value string) bool
 
 	// SetOutGroupVariable [需要master权限]设置其他数据库中的群组变量
 	// 参数：
@@ -276,7 +276,7 @@ type WindStandardDataBaseAPI interface {
 	// - key: 变量名称。
 	// - value: 变量值。
 	// - datamap: 数据表名称。
-	SetOutGroupVariable(app AppInfo, datamap string, msg MessageEventInfo, key string, value string)
+	SetOutGroupVariable(app AppInfo, datamap string, msg MessageEventInfo, key string, value string) bool
 
 	// UnsafelySetUserVariable [不安全][需要master权限]设置用户变量
 	// 参数：
@@ -284,7 +284,7 @@ type WindStandardDataBaseAPI interface {
 	// - id: 数据单元 ID。
 	// - key: 变量名称。
 	// - value: 变量值。
-	UnsafelySetUserVariable(app AppInfo, id string, key string, value string)
+	UnsafelySetUserVariable(app AppInfo, id string, key string, value string) bool
 
 	// UnsafelySetGroupVariable [不安全][需要master权限]设置群组变量
 	// 参数：
@@ -292,7 +292,7 @@ type WindStandardDataBaseAPI interface {
 	// - id: 数据单元 ID。
 	// - key: 变量名称。
 	// - value: 变量值。
-	UnsafelySetGroupVariable(app AppInfo, id string, key string, value string)
+	UnsafelySetGroupVariable(app AppInfo, id string, key string, value string) bool
 
 	// UnsafelySetGlobalVariable [不安全][需要master权限]设置全局变量
 	// 参数：
@@ -300,7 +300,7 @@ type WindStandardDataBaseAPI interface {
 	// - id: 数据单元 ID。
 	// - key: 变量名称。
 	// - value: 变量值。
-	UnsafelySetGlobalVariable(app AppInfo, id string, key string, value string)
+	UnsafelySetGlobalVariable(app AppInfo, id string, key string, value string) bool
 
 	// 	UnsafelySetOutUserVariable [不安全][需要master权限]设置其他数据库中的用户变量
 	// 参数：
@@ -309,7 +309,7 @@ type WindStandardDataBaseAPI interface {
 	// - key: 变量名称。
 	// - value: 变量值。
 	// - datamap: 数据表名称。
-	UnsafelySetOutUserVariable(app AppInfo, datamap string, id string, key string, value string)
+	UnsafelySetOutUserVariable(app AppInfo, datamap string, id string, key string, value string) bool
 
 	// UnsafelySetOutGroupVariable [不安全][需要master权限]设置其他数据库中的群组变量
 	// 参数：
@@ -318,7 +318,7 @@ type WindStandardDataBaseAPI interface {
 	// - key: 变量名称。
 	// - value: 变量值。
 	// - datamap: 数据表名称。
-	UnsafelySetOutGroupVariable(app AppInfo, datamap string, id string, key string, value string)
+	UnsafelySetOutGroupVariable(app AppInfo, datamap string, id string, key string, value string) bool
 
 	// UnsafelySetOutGlobalVariable [不安全][需要master权限]设置其他数据库中的全局变量
 	// 参数：
@@ -327,7 +327,7 @@ type WindStandardDataBaseAPI interface {
 	// - key: 变量名称。
 	// - value: 变量值。
 	// - datamap: 数据表名称。
-	UnsafelySetOutGlobalVariable(app AppInfo, datamap string, id string, key string, value string)
+	UnsafelySetOutGlobalVariable(app AppInfo, datamap string, id string, key string, value string) bool
 
 	// GetUserVariable 获取用户变量
 	// 参数：
@@ -458,5 +458,5 @@ type WindStandardDataBaseAPI interface {
 	// 参数：
 	// - app: 应用信息。
 	// - datamapId: 数据表名称。
-	UnsafelyCreatePublicDatamap(app AppInfo, datamapId string)
+	UnsafelyCreatePublicDatamap(app AppInfo, datamapId string) bool
 }
