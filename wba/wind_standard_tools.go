@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// WindStandardTools Wind 标准工具接口，包含了消息解析、日志记录和版本标签解析等功能。
 type WindStandardTools interface {
 	// MsgUnmarshal 解析消息JSON字符串为 MessageEventInfo 结构体。
 	//
