@@ -18,7 +18,7 @@ import (
 //	fmt.Println(Evaluate("d100+(d10d)d(d)"))        //某故意刁难的测试用例
 //}
 
-func Evaluate(dice_expr string, default_dice_size ...int) (int, error) {
+func Evaluate(dice_expr string, default_dice_size ...int) (string, int, error) {
 	var dice_size int
 	totalRolls := 0
 	if len(default_dice_size) > 0 {
@@ -28,6 +28,7 @@ func Evaluate(dice_expr string, default_dice_size ...int) (int, error) {
 	}
 
 	dice_expr = preprocessDiceExpr(dice_expr, dice_size)
+	normalized_expr := dice_expr
 
 	opnd := NewStack[int](100)  // 操作数栈
 	oprt := NewStack[rune](100) // 运算符栈
@@ -80,29 +81,29 @@ loop:
 				}
 			case '>':
 				if opnd.Size() < 2 {
-					return 0, fmt.Errorf("缺少操作数")
+					return "", 0, fmt.Errorf("缺少操作数")
 				}
 				b := opnd.Pop()
 				a := opnd.Pop()
 				operator := oprt.Pop()
 				result, err := calculate(a, b, operator, &totalRolls) // 传递计数器
 				if err != nil {
-					return 0, err
+					return "", 0, err
 				}
 				opnd.Push(result)
 				if op != '#' {
 					i-- // 仅对非结束符回退
 				}
 			case '!':
-				return 0, fmt.Errorf("语法错误: 不支持的运算符组合 %c 和 %c", oprt.Peek(), op)
+				return "", 0, fmt.Errorf("语法错误: 不支持的运算符组合 %c 和 %c", oprt.Peek(), op)
 			}
 		}
 	}
 
 	if opnd.Size() != 1 {
-		return 0, fmt.Errorf("表达式不完整")
+		return "", 0, fmt.Errorf("表达式不完整")
 	}
-	return opnd.Pop(), nil
+	return normalized_expr, opnd.Pop(), nil
 }
 
 func isDigit(c byte) bool {

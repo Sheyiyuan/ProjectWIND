@@ -234,14 +234,15 @@ func (c *CalculatorInfo) D(n, x int64, v ...int64) int64 {
 }
 
 func (c *CalculatorInfo) Roll(expression string) wba.Result {
-	result, err := dice_expr.Evaluate(expression)
+	normalizedExpression, result, err := dice_expr.Evaluate(expression)
 	text := expression
 	if err != nil {
 		text = err.Error()
 	}
 	return wba.Result{
-		Expression: text,
-		Value:      int64(result),
+		Expression:           text,
+		NormalizedExpression: normalizedExpression,
+		Value:                int64(result),
 	}
 }
 

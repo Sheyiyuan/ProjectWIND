@@ -84,6 +84,7 @@ func (v Vector) Multiply(scalar float64) Vector {
 }
 
 type Result struct {
-	Expression string
-	Value      int64
+	Expression           string
+	NormalizedExpression string
+	Value                int64
 }
