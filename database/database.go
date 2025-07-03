@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-const address = "./data/database/datamaps.wdb"
+const address = "./data/database/root.wdb"
+const backupaddr = "./data/database/backup/backup"
 const core = "./data/core.json"
 
 type Errno struct {
@@ -115,7 +116,10 @@ func folderCheck(filename string) (Error Errno) {
 func fileCheck(filename string) (Error Errno) {
 	// 检查并创建文件
 	dir := filepath.Dir(filename)
-	folderCheck(dir)
+	eno1 := folderCheck(dir)
+	if eno1.Code != 0 {
+		return eno1
+	}
 	eno := Errno{0, ""}
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
@@ -157,7 +161,10 @@ func printContent(file string) (text string, errno Errno) {
 func getCorePassword() (pass string, errno Errno) {
 	// 获取核心密码
 	filename := core
-	fileCheck(filename)
+	eno := fileCheck(filename)
+	if eno.Code != 0 {
+		return "", eno
+	}
 	dataJson, err := printContent(filename)
 	if err.Code != 0 {
 		return "", Errno{101, fmt.Sprintf("读取文件时出错 %s: %v", filename, err)}
@@ -181,6 +188,10 @@ func saveData(db *Database) (errno Errno) {
 		return Errno{201, fmt.Sprintf("序列化数据时出错: %v", err)}
 	}
 	filename := address
+	eno := fileCheck(filename)
+	if eno.Code != 0 {
+		return eno
+	}
 	file, err := os.Create(filename)
 	if err != nil {
 		return Errno{101, fmt.Sprintf("创建文件时出错 %s: %v", filename, err)}
@@ -203,6 +214,29 @@ func loadData(db *Database) (errno Errno) {
 	err2 := json.Unmarshal([]byte(dataJson), db)
 	if err2 != nil {
 		return Errno{201, fmt.Sprintf("反序列化数据时出错: %v", err2)}
+	}
+	return Errno{0, ""}
+}
+
+func backupData(db *Database) (errno Errno) {
+	// 保存数据到文件
+	dataJson, err := json.Marshal(db)
+	if err != nil {
+		return Errno{201, fmt.Sprintf("序列化数据时出错: %v", err)}
+	}
+	timestamp := time.Now().Format("20060102150405")
+	filename := fmt.Sprintf("%s%s.wdb", backupaddr, timestamp)
+	eno := fileCheck(filename)
+	if eno.Code != 0 {
+		return eno
+	}
+	file, err := os.Create(filename)
+	if err != nil {
+		return Errno{101, fmt.Sprintf("创建文件时出错 %s: %v", filename, err)}
+	}
+	err2 := writeContent(file, string(dataJson))
+	if err2.Code != 0 {
+		return err2
 	}
 	return Errno{0, ""}
 }
@@ -325,6 +359,9 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 func dataGet(datamap string, unit string, id string, key string, isAllowed bool, isMaster bool) (res interface{}, errno Errno) {
 	dm, ok := DB.Datamaps[datamap]
 	if !ok {
+		// 创建新数据表
+		DB.addDatamap(datamap)
+		dm = DB.Datamaps[datamap]
 		return "", Errno{601, fmt.Sprintf("数据表 %s 不存在", datamap)}
 	}
 	if !isAllowed && !isMaster && dm.Permission != "private" {
@@ -339,30 +376,36 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		case "number":
 			value, ok := dm.Configs.Number[key]
 			if !ok {
+				// 创建一个空的配置项
+				DB.Datamaps[datamap].Configs.Number[key] = 0
 				return 0, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
 			return value, Errno{0, ""}
 		case "string":
 			value, ok := dm.Configs.String[key]
 			if !ok {
+				DB.Datamaps[datamap].Configs.String[key] = ""
 				return "", Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
 			return value, Errno{0, ""}
 		case "float":
 			value, ok := dm.Configs.Float[key]
 			if !ok {
+				DB.Datamaps[datamap].Configs.Float[key] = 0.0
 				return 0.0, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
 			return value, Errno{0, ""}
 		case "number_slice":
 			value, ok := dm.Configs.Number_Slice[key]
 			if !ok {
+				DB.Datamaps[datamap].Configs.Number_Slice[key] = []int64{}
 				return []int64{}, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
 			return value, Errno{0, ""}
 		case "string_slice":
 			value, ok := dm.Configs.String_Slice[key]
 			if !ok {
+				DB.Datamaps[datamap].Configs.String_Slice[key] = []string{}
 				return []string{}, Errno{601, fmt.Sprintf("配置项不存在%s", key)}
 			}
 			return value, Errno{0, ""}
@@ -374,6 +417,11 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 	case "user":
 		user, ok := dm.Users[id]
 		if !ok {
+			// 创建一个空的用户
+			DB.Datamaps[datamap].Users[id] = User{
+				Id:   id,
+				Data: make(map[string]string),
+			}
 			return "", Errno{601, fmt.Sprintf("用户 %s 不存在", id)}
 		}
 		if user.Data == nil {
@@ -381,12 +429,18 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		}
 		value, ok := user.Data[key]
 		if !ok {
+			// 创建一个空的键
+			DB.Datamaps[datamap].Users[id].Data[key] = ""
 			return "", Errno{601, fmt.Sprintf("用户 %s 的数据中键 %s 不存在", id, key)}
 		}
 		return value, Errno{0, ""}
 	case "group":
 		group, ok := dm.Groups[id]
 		if !ok {
+			DB.Datamaps[datamap].Groups[id] = Group{
+				Id:   id,
+				Data: make(map[string]string),
+			}
 			return "", Errno{601, fmt.Sprintf("群组 %s 不存在", id)}
 		}
 		if group.Data == nil {
@@ -394,12 +448,17 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		}
 		value, ok := group.Data[key]
 		if !ok {
+			DB.Datamaps[datamap].Groups[id].Data[key] = ""
 			return "", Errno{601, fmt.Sprintf("群组 %s 的数据中键 %s 不存在", id, key)}
 		}
 		return value, Errno{0, ""}
 	case "global":
 		global, ok := dm.Global[id]
 		if !ok {
+			DB.Datamaps[datamap].Global[id] = Global{
+				Id:   id,
+				Data: make(map[string]string),
+			}
 			return "", Errno{601, fmt.Sprintf("全局变量 %s 不存在", id)}
 		}
 		if global.Data == nil {
@@ -407,6 +466,7 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		}
 		value, ok := global.Data[key]
 		if !ok {
+			DB.Datamaps[datamap].Global[id].Data[key] = ""
 			return "", Errno{601, fmt.Sprintf("全局变量 %s 的数据中键 %s 不存在", id, key)}
 		}
 		return value, Errno{0, ""}
@@ -431,9 +491,13 @@ func Start() {
 	// 监听指定的信号，如SIGINT (Ctrl+C) 和 SIGTERM
 	signal.Notify(dataChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// 定义一个Ticker用于每1小时触发一次保存操作
+	// 每1小时触发一次保存操作
 	saveTicker := time.NewTicker(3600 * time.Second)
 	defer saveTicker.Stop()
+
+	// 每24小时触发一次备份操作
+	backupTicker := time.NewTicker(24 * time.Hour)
+	defer backupTicker.Stop()
 
 	// 启动一个goroutine等待信号和定时保存
 	go func() {
@@ -448,6 +512,10 @@ func Start() {
 				// 定时保存数据
 				LOG.Info("自动保存数据")
 				saveData(DB)
+			case <-backupTicker.C:
+				// 定时备份数据
+				LOG.Info("自动备份数据")
+				backupData(DB)
 			}
 		}
 	}()
