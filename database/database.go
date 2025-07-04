@@ -351,7 +351,7 @@ func dataSet(datamap string, unit string, id string, key string, value interface
 		}
 		global.Data[key] = valueStr // 使用断言后的string值
 	default:
-		return Errno{304, "不合法的数据单元"}
+		return Errno{304, fmt.Sprint("不合法的数据单元%s", unit)}
 	}
 	return Errno{0, ""}
 }
@@ -471,7 +471,7 @@ func dataGet(datamap string, unit string, id string, key string, isAllowed bool,
 		}
 		return value, Errno{0, ""}
 	default:
-		return "", Errno{304, "不合法的数据单元"}
+		return "", Errno{304, fmt.Sprint("不合法的数据单元%s", unit)}
 	}
 }
 
@@ -608,6 +608,9 @@ func MasterGet(datamap string, unit string, id string, key string) (interface{},
 		eno.Log()
 		return "", false
 	}
+	if val == "" {
+		return val, false
+	}	
 	return val, true
 }
 
