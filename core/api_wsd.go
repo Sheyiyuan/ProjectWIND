@@ -140,6 +140,9 @@ func (dbi *databaseInfo) GetUserVariable(app wba.AppInfo, msg wba.MessageEventIn
 		eno.Log()
 		return "", false
 	}
+	if res == "" {
+		return res, false
+	}
 	return res, true
 }
 
@@ -156,6 +159,9 @@ func (dbi *databaseInfo) GetGroupVariable(app wba.AppInfo, msg wba.MessageEventI
 		eno.Log()
 		return "", false
 	}
+	if res == "" {
+		return res, false
+	}
 	return res, true
 }
 
@@ -165,6 +171,9 @@ func (dbi *databaseInfo) GetOutUserVariable(app wba.AppInfo, datamap string, msg
 	if eno.Code != 0 {
 		eno.Log()
 		return "", false
+	}
+	if res == "" {
+		return res, false
 	}
 	return res, true
 }
@@ -182,6 +191,9 @@ func (dbi *databaseInfo) GetOutGroupVariable(app wba.AppInfo, datamap string, ms
 		eno.Log()
 		return "", false
 	}
+	if res == "" {
+		return res, false
+	}
 	return res, true
 }
 
@@ -190,6 +202,9 @@ func (dbi *databaseInfo) UnsafelyGetUserVariable(app wba.AppInfo, id string, key
 	if eno.Code != 0 {
 		eno.Log()
 		return "", false
+	}
+	if res == "" {
+		return res, false
 	}
 	return res, true
 }
@@ -200,6 +215,9 @@ func (dbi *databaseInfo) UnsafelyGetGroupVariable(app wba.AppInfo, id string, ke
 		eno.Log()
 		return "", false
 	}
+	if res == "" {
+		return res, false
+	}
 	return res, true
 }
 
@@ -208,6 +226,9 @@ func (dbi *databaseInfo) UnsafelyGetGlobalVariable(app wba.AppInfo, id string, k
 	if eno.Code != 0 {
 		eno.Log()
 		return "", false
+	}
+	if res == "" {
+		return res, false
 	}
 	return res, true
 }
@@ -218,6 +239,9 @@ func (dbi *databaseInfo) UnsafelyGetOutUserVariable(app wba.AppInfo, datamap str
 		eno.Log()
 		return "", false
 	}
+	if res == "" {
+		return res, false
+	}
 	return res, true
 }
 
@@ -227,6 +251,9 @@ func (dbi *databaseInfo) UnsafelyGetOutGroupVariable(app wba.AppInfo, datamap st
 		eno.Log()
 		return "", false
 	}
+	if res == "" {
+		return res, false
+	}
 	return res, true
 }
 
@@ -235,6 +262,9 @@ func (dbi *databaseInfo) UnsafelyGetOutGlobalVariable(app wba.AppInfo, datamap s
 	if eno.Code != 0 {
 		eno.Log()
 		return "", false
+	}
+	if res == "" {
+		return res, false
 	}
 	return res, true
 }
