@@ -62,7 +62,13 @@ func CmdHandle(msg wba.MessageEventInfo) (isCmd bool, ok bool, err error) {
 	session := wba.SessionInfo{}
 	session = session.Load("QQ", msg)
 	// 从数据库加载配置
-	conf, ok := database.MasterGet("GCAS_Config", session.SessionType, strconv.FormatInt(session.SessionId, 10), "GCAS_Config")
+	var key string
+	if session.SessionType == "group" {
+		key = "group"
+	} else {
+		key = "user"
+	}
+	conf, ok := database.MasterGet("GCAS_Config", key, strconv.FormatInt(session.SessionId, 10), "GCAS_Config")
 	if !ok {
 		conf = "{}"
 	}

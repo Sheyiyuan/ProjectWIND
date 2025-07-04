@@ -63,7 +63,7 @@ func (a *CmdAgentSelector) LoadConfig(session SessionInfo, config string) error 
 	conf := CmdAgentSelector{}
 	err := json.Unmarshal([]byte(config), &conf)
 	if err != nil {
-		return err
+		_ = json.Unmarshal([]byte("{}"), &conf)
 	}
 	for i := 0; i < 4; i++ {
 		for selectorName, selector := range a.Selectors[i] {
@@ -77,7 +77,7 @@ func (a *CmdAgentSelector) LoadConfig(session SessionInfo, config string) error 
 			}
 		}
 	}
-	return nil
+	return err
 }
 
 // AddCmdMap 添加一个命令映射(map[AppKey]CmdList)到 CmdAgentSelector 中。
