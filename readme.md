@@ -28,8 +28,8 @@ TODO:
   - [ ] 文件资源管理
   - [ ] 多用户系统
   - [ ] 数据库管理
-  - [ ] 日志输出
-  - [ ] 配置文件
+  - [x] 日志输出
+  - [x] 配置文件
 - [ ] 插件管理
   - [x] 基础事件处理
   - [x] 指令管理
@@ -40,8 +40,13 @@ TODO:
 - [ ] 手册编写
 
 ---
-
 # 项目依赖与致谢
+
+本项目的开发收到了以下项目的启发和支持，在此对其开发者表示诚挚的感谢：
+
+- [sealdice](https://github.com/sealdice/sealdice-core/) 海豹 TRPG 骰点核心，开源跑团辅助工具
+- [OlivOS](https://github.com/OlivOS-Team/OlivOS) 一个强大的跨平台交互栈与机器人框架
+- [NapCatQQ](https://github.com/NapNeko/NapCatQQ) 基于 NTQQ 的现代协议端框架
 
 本项目在开发过程中使用了以下优秀的外部库，在此对其开发者表示诚挚的感谢：
 
