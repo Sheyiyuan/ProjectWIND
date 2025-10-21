@@ -1,8 +1,8 @@
-/tmp
-/scripts
-/ProjectWIND
-/data
+tmp/
+data/
 **/.DS_Store
-/app_demo/
 .idea/
 .vscode/
+ProjectWIND
+ProjectWIND.exe
+*/*abandoned*

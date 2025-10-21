@@ -1,6 +1,6 @@
 # WBA 文档
 
-WBA是用于对接WIND核心和APP通信的接口，规定了应用结构规范，并提供了与wind核心交互的接口定义。
+WBA是用于对接Bot协议、WIND核心和APP通信的接口，规定了应用结构规范，并提供了与wind核心交互的接口定义。
 
 ## 目录
 - [1. 应用结构规范](#1-应用结构规范)
@@ -218,7 +218,15 @@ wind实例提供的接口可以分为下面几个部分：
 
 ### 2.3 数据库模块
 
+  1.数据库模块目前仅提供数据存储和查找功能
 
+```go
+func Get(category string, id string, key string) (string,bool)
+func Set(category string, id string, key string, value string)
+// category部分可以填入"user","group","global"，分别表示个人变量，群变量，全局变量
+// id为用户id或群id，可以理解为命名空间
+// key为要查询的变量名，value为要修改的变量值，所有变量存储请使用string类型
+```
 
 ### 2.4 文件管理模块
 
